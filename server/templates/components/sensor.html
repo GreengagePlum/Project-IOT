@@ -1,0 +1,33 @@
+<article>
+  <h3>Capteur #XX</h3>
+  <section class="led">
+    <h4>LED</h4>
+    <div class="led-container">
+      <img src="{{ url_for('static', filename='assets/blue-led.png') }}" alt="L'état LED" class="led-image" title="L'état LED">
+      <form method="get" action="led.html">
+        <div>
+          <input type="checkbox" id="led-toggle" name="led" value="on" onchange="this.form.submit()" />
+          <label for="led-toggle">Allumer/éteindre LED</label>
+          <!-- <input type="hidden" name="led" value="off" /> -->
+        </div>
+      </form>
+    </div>
+  </section>
+  <section class="push-button">
+    <h4>Bouton poussoir</h4>
+    <div class="push-button-container">
+      <img src="{{ url_for('static', filename='assets/buttons/unpressed-button.png') }}" alt="L'état du bouton poussoir" class="push-button-image"
+        title="L'état du bouton poussoir">
+      <p class="push-button-status">(Non pressé)</p>
+    </div>
+  </section>
+  <section class="light">
+    <h4>Photorésistance</h4>
+    <div class="light-container">
+      <div class="light-chart">
+
+      </div>
+      <p class="light-status">Luminosité : 50%</p>
+    </div>
+  </section>
+</article>

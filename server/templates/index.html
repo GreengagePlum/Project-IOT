@@ -1,111 +1,17 @@
-<!DOCTYPE html>
-<html lang="fr">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Capteurs IOT</title>
-    <link rel="icon" type="image/png" href="logo.png">
-    <meta name="keywords" content="IOT, capteurs, connectés, domotique, lumière, bouton poussoir, LED">
-    <meta name="description" content="Un site pour visualiser et gérer de multiples capteurs connectés ESP32.">
-    <meta name="author" content="Efe ERKEN, Sylvain PRANDO">
-    <!-- <meta http-equiv="refresh" content="30"> -->
-    <link rel="stylesheet" href="style.css">
-    <script src="script.js" defer></script>
+{% block head %}
+{% include 'components/metadata.html' %}
+{% endblock %}
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
-        rel="stylesheet">
-</head>
+{% block header %}
+{% include 'components/header.html' %}
+{% endblock %}
 
-<body>
-    <header>
-        <section class="title-authors">
-            <a href="index.html">
-                <div class="title">
-                    <img src="assets/logo.png" alt="Logo" class="logo">
-                    <h1>Capteurs IOT</h1>
-                </div>
-            </a>
-            <div class="authors">
-                <p>Efe ERKEN</p>
-                <p>Sylvain PRANDO</p>
-            </div>
-        </section>
-        <section class="navbar">
-            <nav>
-                <menu>
-                    <ul>
-                        <li><a href="index.html">Accueil</a></li>
-                        <li><a href="capteurs.html" class="disabled">Capteurs</a></li>
-                        <li><a href="historique.html" class="disabled">Historique</a></li>
-                    </ul>
-                    <p>Projet IOC M1S2 2024-25</p>
-                </menu>
-            </nav>
-        </section>
-    </header>
-    <main>
-        <div class="content">
-            <header>
-                <h2>Capteurs connectés (4)</h2>
-                <section class="content-controls">
-                    <div class="search-container">
-                        <input type="text" class="search-bar" placeholder="Filtrer...">
-                    </div>
-                    <button class="toggle-grid" type="button" onclick="" title="Changer d'agencement">🔢</button>
-                </section>
-            </header>
-            <article>
-                <h3>Capteur #XX</h3>
-                <section class="led">
-                    <h4>LED</h4>
-                    <div class="led-container">
-                        <img src="assets/blue-led.png" alt="L'état LED" class="led-image" title="L'état LED">
-                        <form method="get" action="led.html">
-                            <div>
-                                <input type="checkbox" id="led-toggle" name="led" value="on"
-                                    onchange="this.form.submit()" />
-                                <label for="led-toggle">Allumer/éteindre LED</label>
-                                <!-- <input type="hidden" name="led" value="off" /> -->
-                            </div>
-                        </form>
-                    </div>
-                </section>
-                <section class="push-button">
-                    <h4>Bouton poussoir</h4>
-                    <div class="push-button-container">
-                        <img src="assets/buttons/unpressed-button.png" alt="L'état du bouton poussoir"
-                            class="push-button-image" title="L'état du bouton poussoir">
-                        <p class="push-button-status">(Non pressé)</p>
-                    </div>
-                </section>
-                <section class="light">
-                    <h4>Photorésistance</h4>
-                    <div class="light-container">
-                        <div class="light-chart">
+{% block content %}
+{% include 'components/content_sensor.html' %}
+{% endblock %}
 
-                        </div>
-                        <p class="light-status">Luminosité : 50%</p>
-                    </div>
-                </section>
-            </article>
-        </div>
-    </main>
-    <footer>
-        <section class="footer-content">
-            <p>&copy; 2025 Capteurs IOT. Tous droits réservés.</p>
-            <nav>
-                <ul>
-                    <li><a href="index.html">Accueil</a></li>
-                    <li><a href="capteurs.html" class="disabled">Capteurs</a></li>
-                    <li><a href="historique.html" class="disabled">Historique</a></li>
-                </ul>
-            </nav>
-        </section>
-    </footer>
-</body>
-
-</html>
+{% block footer %}
+{% include 'components/footer.html' %}
+{% endblock %}
