@@ -1,4 +1,4 @@
-.PHONY: all debug prod help clean
+.PHONY: help debug prod broker client
 
 help:
 	@echo ""
@@ -7,6 +7,8 @@ help:
 	@echo "      target :	help	this message"
 	@echo " 		debug	run the development server in debug mode"
 	@echo " 		prod	run the production server"
+	@echo " 		broker	run the MQTT broker"
+	@echo " 		client	run the server side MQTT client"
 	@echo ""
 
 debug:
@@ -14,3 +16,9 @@ debug:
 
 prod:
 	gunicorn -w 4 'app:app'
+
+broker:
+	mosquitto -c mosquitto.conf
+
+client:
+	python mqtt_client/mqtt.py

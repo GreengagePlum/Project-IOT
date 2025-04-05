@@ -3,7 +3,7 @@
 ## Bugs & Fixes
 
 - [ ] Cleanup HTML and CSS
-- [ ] Chop up HTML and CSS into logical units
+- [ ] Chop up CSS into logical units
 
 ## Features
 
@@ -17,10 +17,11 @@
 - [ ] Add charts
 - [ ] Write backend server
   - [ ] Implement websockets or sse
+- [ ] Password protect MQTT
 
 ## Configuration
 
-- [ ] Create git repo
+- [ ]
 
 ## Miscellaneous
 
@@ -28,3 +29,6 @@
 - [ ] Test on RBPi 3
 
 ## Done
+
+- [x] Chop up HTML into logical units
+- [x] Create git repo
