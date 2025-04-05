@@ -12,13 +12,13 @@ help:
 	@echo ""
 
 debug:
-	python -m flask run --debug
+	python -m flask --app web_server/app run --debug
 
 prod:
-	gunicorn -w 4 'app:app'
+	gunicorn -w 4 'web_server.app:app'
 
 broker:
-	mosquitto -c mosquitto.conf
+	cd mqtt/ && mosquitto -c mosquitto.conf
 
 client:
-	python mqtt_client/mqtt.py
+	python mqtt/mqtt_client/mqtt.py

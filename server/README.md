@@ -1,7 +1,7 @@
 # Server side programs
 
 Here you can find a description of the "server" side components of the system including the web server, the MQTT client
-for the web server and more.
+for the web server and more. They are all organized into their own subfolders.
 
 ## Usage
 
