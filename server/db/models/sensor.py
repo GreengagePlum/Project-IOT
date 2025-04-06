@@ -4,6 +4,8 @@ from datetime import datetime
 from sqlalchemy import ForeignKey
 from sqlalchemy import String
 from sqlalchemy import DateTime
+from sqlalchemy import CheckConstraint
+from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
@@ -17,9 +19,16 @@ class Base(DeclarativeBase):
 
 class Sensor(Base):
     __tablename__ = "sensor"
+
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[Optional[str]] = mapped_column(String(30), unique=True)
+
     status: Mapped[bool]  # whether the ESP32 is currently online
+    mac_address: Mapped[str] = mapped_column(String(17), unique=True)
+    joined_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    last_seen: Mapped[datetime] = mapped_column(server_default=func.now())
+    session_id: Mapped[str] = mapped_column(String(17))
+
     led_status: Mapped[List["LedStatus"]] = relationship(
         back_populates="sensor", cascade="all, delete-orphan"
     )
@@ -30,8 +39,22 @@ class Sensor(Base):
         back_populates="sensor", cascade="all, delete-orphan"
     )
 
+    __table_args__ = (
+        UniqueConstraint("id", "session_id"),
+        CheckConstraint("joined_at <= last_seen"),
+    )
+
     def __repr__(self) -> str:
-        return f"Sensor(id={self.id!r}, name={self.name!r}, isActive={self.status!r})"
+        return f"""
+            Sensor(
+                id={self.id!r},
+                name={self.name!r},
+                isActive={self.status!r},
+                @MAC={self.mac_address!r},
+                joined_at={self.joined_at!r},
+                last_seen={self.last_seen!r},
+                session_id={self.session_id!r}
+            )"""
 
 
 class BasicStatus:
@@ -41,7 +64,7 @@ class BasicStatus:
     status: Mapped[bool]
 
     def __repr__(self) -> str:
-        return f"Status(id={self.id!r}, status={self.status!r}, date={self.date!r})"
+        return f"Status(id={self.id!r}, sensor_id={self.sensor_id!r}, status={self.status!r}, date={self.date!r})"
 
 
 class PercentageStatus(BasicStatus):
