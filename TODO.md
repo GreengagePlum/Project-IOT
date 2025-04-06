@@ -18,6 +18,7 @@
 - [ ] Write backend server
   - [ ] Implement websockets or sse
 - [ ] Password protect MQTT
+  - [ ] Add authenticity checks via crypto (?)
 
 ## Configuration
 
@@ -27,6 +28,8 @@
 
 - [ ] Test on other machines/browsers
 - [ ] Test on RBPi 3
+  - [ ] Check if in memory sqlite makes a performance difference
+- [ ] Add better hierarchy to MQTT channels
 
 ## Done
 
