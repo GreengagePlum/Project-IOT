@@ -1,0 +1,72 @@
+from typing import List
+from typing import Optional
+from datetime import datetime
+from sqlalchemy import ForeignKey
+from sqlalchemy import String
+from sqlalchemy import DateTime
+from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import Mapped
+from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+class Sensor(Base):
+    __tablename__ = "sensor"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[Optional[str]] = mapped_column(String(30), unique=True)
+    status: Mapped[bool]  # whether the ESP32 is currently online
+    led_status: Mapped[List["LedStatus"]] = relationship(
+        back_populates="sensor", cascade="all, delete-orphan"
+    )
+    button_status: Mapped[List["ButtonStatus"]] = relationship(
+        back_populates="sensor", cascade="all, delete-orphan"
+    )
+    pres_status: Mapped[List["PhotoresistorStatus"]] = relationship(
+        back_populates="sensor", cascade="all, delete-orphan"
+    )
+
+    def __repr__(self) -> str:
+        return f"Sensor(id={self.id!r}, name={self.name!r}, isActive={self.status!r})"
+
+
+class BasicStatus:
+    id: Mapped[int] = mapped_column(primary_key=True)
+    sensor_id: Mapped[int] = mapped_column(ForeignKey("sensor.id"))
+    date: Mapped[datetime] = mapped_column(DateTime(), server_default=func.now())
+    status: Mapped[bool]
+
+    def __repr__(self) -> str:
+        return f"Status(id={self.id!r}, status={self.status!r}, date={self.date!r})"
+
+
+class PercentageStatus(BasicStatus):
+    status: Mapped[int]
+
+
+class LedStatus(Base, BasicStatus):
+    __tablename__ = "led_status"
+    sensor: Mapped["Sensor"] = relationship(back_populates="led_status")
+
+    def __repr__(self) -> str:
+        return "Led" + super().__repr__()
+
+
+class ButtonStatus(Base, BasicStatus):
+    __tablename__ = "button_status"
+    sensor: Mapped["Sensor"] = relationship(back_populates="button_status")
+
+    def __repr__(self) -> str:
+        return "Button" + super().__repr__()
+
+
+class PhotoresistorStatus(Base, PercentageStatus):
+    __tablename__ = "pres_status"
+    sensor: Mapped["Sensor"] = relationship(back_populates="pres_status")
+
+    def __repr__(self) -> str:
+        return "Photoresistor" + super().__repr__()

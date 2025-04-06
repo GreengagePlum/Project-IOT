@@ -19,6 +19,8 @@ _Under construction..._
 This part describes the MQTT communications used to make the whole system come together. **MQTT v5** is considered for
 use in this project.
 
+The keepalive interval has to be **strictly** lower than 6 seconds.
+
 ### Channels
 
 Here is an overview of the MQTT channels used between the ESP32s and the web server to relay all the necessary
@@ -97,12 +99,14 @@ Example: `capteur01:58`
 
 * `state/join`
 
-`<ip>`
+`<ip>` or `<name>`
 
 The initial identifier for an ESP32 is its IP address in the same Wi-Fi network its connected to with the Raspberry Pi.
 This is to ensure uniqueness in the name assignment period.
 
-Example: `192.168.1.18`
+Otherwise if the ESP32 has hold of a previously persisted name, it should use that.
+
+Example: `192.168.1.18` or `capteur02`
 
 * `state/leave`
 
@@ -118,7 +122,7 @@ Example: `capteur01`
 
 A new name assignment or a name change for an existing name.
 
-The web server may assign any string as a name. Most likely the default will be something like `capteurXX` where `XX` is an incrementing number depending on the number of previously connected ESP32s. But it could also simply be a number (`1`, `54`) or a custom name most likely assigned by a web server client (`LeBron`).
+The web server may assign any string as a name (at most 30 characters including the trailing zero). Most likely the default will be something like `capteurXX` where `XX` is an incrementing number depending on the number of previously connected ESP32s. But it could also simply be a number (`1`, `54`) or a custom name most likely assigned by a web server client (`LeBron`).
 
 Once received, this name should be stored by the ESP32s and used to identify themselves when publishing messages or when
 subscribed to channels to determine if a message concerns them. It could also be considered for persistance in case of a
@@ -130,7 +134,7 @@ place or is assumed to never go offline.
 The server can also issue a name change for a given ESP32 (most likely issued by a web server client from their
 browser).
 
-Example: `192.168.1.18:capteur01` or `capteur01:LeBron`
+Example: `192.168.1.18:capteur01` or `5:LeBron`
 
 ### Protocol/exchanges
 
