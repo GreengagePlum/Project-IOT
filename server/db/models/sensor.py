@@ -1,3 +1,9 @@
+"""Database table definitions
+
+This file describes the models used and the Python mappings. These descriptions are used to create matching database
+tables eventually and to access them from Python.
+"""
+
 from typing import List
 from typing import Optional
 from datetime import datetime
@@ -11,6 +17,8 @@ from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
+PAYLOAD_seperator = ";"
 
 
 class Base(DeclarativeBase):
@@ -40,8 +48,12 @@ class Sensor(Base):
     )
 
     __table_args__ = (
-        UniqueConstraint("id", "session_id"),
         CheckConstraint("joined_at <= last_seen"),
+        CheckConstraint(
+            "mac_address GLOB '[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]'"
+        ),
+        CheckConstraint("instr(name, '%s') = 0" % PAYLOAD_seperator),
+        CheckConstraint("instr(session_id, '%s') = 0" % PAYLOAD_seperator),
     )
 
     def __repr__(self) -> str:
@@ -69,6 +81,8 @@ class BasicStatus:
 
 class PercentageStatus(BasicStatus):
     status: Mapped[int]
+
+    __table_args__ = (CheckConstraint("0 <= status AND status <= 100"),)
 
 
 class LedStatus(Base, BasicStatus):
