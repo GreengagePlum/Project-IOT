@@ -18,7 +18,7 @@ from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-PAYLOAD_seperator = ";"
+PAYLOAD_separator = ";"
 
 
 class Base(DeclarativeBase):
@@ -52,8 +52,8 @@ class Sensor(Base):
         CheckConstraint(
             "mac_address GLOB '[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]'"
         ),
-        CheckConstraint("instr(name, '%s') = 0" % PAYLOAD_seperator),
-        CheckConstraint("instr(session_id, '%s') = 0" % PAYLOAD_seperator),
+        CheckConstraint("instr(name, '%s') = 0" % PAYLOAD_separator),
+        CheckConstraint("instr(session_id, '%s') = 0" % PAYLOAD_separator),
     )
 
     def __repr__(self) -> str:

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block head %}
-{% with title="Accueil" %}
+{% with title="Capteurs", scripts=['js/capteurs.js'], stylesheets=['css/capteurs.css'] %}
 {% include 'components/metadata.html' %}
 {% endwith %}
 {% endblock %}
@@ -12,7 +12,7 @@
 {% endblock %}
 
 {% block content %}
-  <p style="display: block; height: 60vh;">En construction...</p>
+{% include 'components/content_sensor.html' %}
 {% endblock %}
 
 {% block footer %}

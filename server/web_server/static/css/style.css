@@ -144,141 +144,6 @@ img.logo {
     height: 4.5em;
 }
 
-.content {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-    gap: 30px;
-    margin: 30px;
-}
-
-.content header {
-    background: linear-gradient(160deg, rgba(255, 255, 255, 1) 0%, rgba(252, 224, 125, 1) 50%, rgba(255, 255, 255, 0.8393558106836485) 100%);
-    border-radius: 20px;
-    color: black;
-    padding: 20px;
-    margin-bottom: 10px;
-    grid-column: 1 / -1;
-    /* grid-row-start: 1;
-    grid-row-end: 1; */
-}
-
-.content article {
-    background: linear-gradient(160deg, rgba(255, 255, 255, 1) 0%, rgba(252, 224, 125, 1) 50%, rgba(255, 255, 255, 0.8393558106836485) 100%);
-    border-radius: 20px;
-    color: black;
-    padding: 20px;
-    display: grid;
-    /* grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); */
-    grid-template:
-        "header header"
-        "led button"
-        "light light";
-    gap: 10px;
-}
-
-.content article h3 {
-    grid-column: 1 / -1;
-    margin: 0;
-    margin-bottom: 10px;
-    padding-bottom: 10px;
-    display: block;
-    border-bottom: #333 3px solid;
-}
-
-.content article section {
-    backdrop-filter: brightness(0.95);
-    border-radius: 10px;
-    padding: 15px;
-}
-
-.content article section h4 {
-    text-align: center;
-}
-
-.content article section.light {
-    grid-column: 1 / -1;
-}
-
-.content article section.push-button .push-button-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    margin: 20px 0 0 0;
-    gap: 10px;
-}
-
-.content article section.push-button .push-button-container img {
-    width: 100px;
-    height: 100px;
-
-    image-rendering: crisp-edges;
-    image-rendering: pixelated;
-
-    /* Firefox */
-    image-rendering: -moz-crisp-edges;
-
-    /* Opera */
-    image-rendering: -o-crisp-edges;
-
-    /* Webkit (non-standard naming) */
-    image-rendering: -webkit-optimize-contrast;
-
-    /* IE (non-standard property) */
-    -ms-interpolation-mode: nearest-neighbor;
-}
-
-.content article section.led .led-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    margin: 20px 0 0 0;
-    gap: 10px;
-}
-
-.content article section.led .led-container img {
-    width: 100px;
-    height: 100px;
-
-    image-rendering: crisp-edges;
-    image-rendering: pixelated;
-
-    /* Firefox */
-    image-rendering: -moz-crisp-edges;
-
-    /* Opera */
-    image-rendering: -o-crisp-edges;
-
-    /* Webkit (non-standard naming) */
-    image-rendering: -webkit-optimize-contrast;
-
-    /* IE (non-standard property) */
-    -ms-interpolation-mode: nearest-neighbor;
-
-    filter: brightness(0.5) contrast(50%);
-    /* filter: brightness(2) contrast(150%); */
-}
-
-.content article section.led .led-container input[type="checkbox"] {
-    width: 1.7rem;
-    height: 1.7rem;
-    cursor: pointer;
-}
-
-.content article section.led .led-container form div {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-}
-
-.content-controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-}
 
 .search-container {
     padding-right: 10px;
@@ -366,4 +231,14 @@ button:hover {
 button:active {
     background-color: #555;
     transform: scale(1);
+}
+
+.no-js-warning {
+  background-color: #ffdddd;
+  color: #a00;
+  padding: 1em;
+  text-align: center;
+  font-weight: bold;
+  border: 1px solid #a00;
+  margin: 1em 0;
 }

@@ -7,16 +7,11 @@
 
 ## Features
 
-- [ ] Implement filter bar logic
-- [ ] Implement layout toggle
-- [ ] Implement UI updates
-  - [ ] LED state changes
-  - [ ] Button state changes
-- [ ] Ensure responsiveness
-- [ ] Show error message when no js available
+- [ ] Implement sensor name editing
 - [ ] Add charts
-- [ ] Write backend server
-  - [ ] Implement websockets or sse
+- [ ] Ensure responsiveness
+- [ ] Add home page (with real life pictures of the setup)
+- [ ] Implement layout toggle
 - [ ] Password protect MQTT
   - [ ] Add authenticity checks via crypto (?)
 
@@ -30,8 +25,17 @@
 - [ ] Test on RBPi 3
   - [ ] Check if in memory sqlite makes a performance difference
 - [ ] Add better hierarchy to MQTT channels
+- [ ] Add EN/FR language switch to the website
+  - [ ] Translate website
 
 ## Done
 
+- [x] Write backend server
+  - [-] Implement websockets or sse
+- [x] Show error message when no js available
+- [x] Implement UI updates
+  - [x] LED state changes
+  - [x] Button state changes
+- [x] Implement filter bar logic
 - [x] Chop up HTML into logical units
 - [x] Create git repo

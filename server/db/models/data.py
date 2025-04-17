@@ -48,7 +48,7 @@ if __name__ == "__main__":
             session_id=str(time()),
             led_status=[
                 LedStatus(status=True, date=datetime(2025, 4, 3, 5)),
-                LedStatus(status=False, date=datetime(2025, 4, 4)),
+                LedStatus(status=True, date=datetime(2025, 4, 4)),
             ],
             button_status=[
                 ButtonStatus(status=False, date=datetime(2025, 4, 3, 8)),

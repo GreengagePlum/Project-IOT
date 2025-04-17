@@ -1,0 +1,46 @@
+.content {
+  margin: 30px;
+}
+
+.content header {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 1) 0%, rgba(252, 224, 125, 1) 50%, rgba(255, 255, 255, 0.8393558106836485) 100%);
+  border-radius: 20px;
+  color: black;
+  padding: 20px;
+  margin-bottom: 10px;
+}
+
+.content article {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 1) 0%, rgba(252, 224, 125, 1) 50%, rgba(255, 255, 255, 0.8393558106836485) 100%);
+  border-radius: 20px;
+  color: black;
+  padding: 20px;
+  margin: 30px 0px;
+}
+
+.content article h3 {
+  margin: 0;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  display: block;
+  border-bottom: #333 3px solid;
+}
+
+.content article section {
+  backdrop-filter: brightness(0.95);
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 10px;
+}
+
+.content article section h4 {
+  text-align: left;
+  margin-bottom: 10px;
+}
+
+.content-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}

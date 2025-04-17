@@ -8,7 +8,7 @@ from .models.sensor import PhotoresistorStatus
 
 # TODO: Make checks more robust (sensor readings coming from a disconnected sensor)
 
-log = logging.getLogger(LOGGER_name)
+log = logging.getLogger(LOGGER_name + ".callbacks")
 
 
 # The callback for when the client receives a CONNACK response from the server.
@@ -36,6 +36,7 @@ def on_join(client, userdata, msg):
     log.debug("Received message on channel [%s]", CHANNEL_state_join)
     split = str(msg.payload, encoding="ascii").split(PAYLOAD_seperator)
     assert 1 <= len(split) <= 2, "Malformed message payload"
+    # TODO: continue adding logs from here and then utils.py
     if len(split) == 1:  # case of an initial connection (only a MAC address received)
         mac = split[0]
         if sensor_exists_record(mac=mac):
