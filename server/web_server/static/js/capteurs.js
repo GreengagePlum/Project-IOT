@@ -1,3 +1,92 @@
+const ip = document.querySelector("div.content").getAttribute("data-ip")
+const client = mqtt.connect(`mqtt://${ip}:9001`, {keepalive: 5, protocolVersion: 5})
+
+client.subscribe({'led/status': {qos: 1}, 'button/status': {qos: 0}, 'photoresistor/status': {qos: 0}, 'state/join': {qos: 2}, 'state/leave': {qos: 2}}, (err, granted) => {
+  if (err) {
+    console.log(err)
+  } else {
+    console.log("Subscriptions granted", granted)
+  }
+})
+
+client.on("connect", () => {
+  console.log("Successfully connected to the MQTT broker")
+})
+
+client.on("reconnect", () => {
+  console.log("Reconnection started to the MQTT broker")
+})
+
+client.on("disconnect", () => {
+  console.log("Connection closed to the MQTT broker")
+})
+
+client.on("offline", () => {
+  console.log("Connection offline to the MQTT broker")
+})
+
+client.on("error", (error) => {
+  console.log("Error on parsing or connection to the MQTT broker:", error)
+})
+
+client.on("message", (topic, message) => {
+  // message is Buffer
+  let payloadStr = message.toString()
+  console.log("Received message:", topic, payloadStr);
+  let article = null
+  const regex = /\((\d+)\)/
+  switch (topic) {
+    case "led/status":
+      splitList = payloadStr.split(";")
+      article = document.querySelector(`.content article[data-id="${splitList[0]}"]`)
+      if (article.getAttribute("data-session-id") != splitList[1])
+        break;
+      let ledContainer = article.querySelector(".led-container")
+      switchLed(ledContainer, Boolean(Number(splitList[2])))
+      break;
+    case "button/status":
+      splitList = payloadStr.split(";")
+      article = document.querySelector(`.content article[data-id="${splitList[0]}"]`)
+      if (article.getAttribute("data-session-id") != splitList[1])
+        break;
+      let btnContainer = article.querySelector(".push-button-container")
+      switchButton(btnContainer, Boolean(Number(splitList[2])))
+      break;
+    case "photoresistor/status":
+      // TODO: implement real time chart here...
+      break;
+    case "state/join":
+      if (!payloadStr.includes(";"))
+        break;
+      splitList = payloadStr.split(";")
+      article = document.querySelector(`.content article[data-id="${splitList[0]}"]`)
+      if (article == null) {
+        fetch(`/sensor/${splitList[0]}`)
+          .then(response => response.text()) // TODO: Manage errors here if server malfunctions
+          .then(data => {
+            document.querySelector(".content article").insertAdjacentHTML("beforebegin", data)
+            let contentHeader = document.querySelector(".content header h2")
+            let newStr = "(" + (Number(contentHeader.innerText.match(regex)[1]) + 1) + ")"
+            contentHeader.innerText = contentHeader.innerText.replace(regex, newStr)
+          })
+          .catch(error => console.error(error));
+      } else {
+        article.getAttribute("data-session-id", splitList[1])
+      }
+      break;
+    case "state/leave":
+      splitList = payloadStr.split(";")
+      article = document.querySelector(`.content article[data-id="${splitList[0]}"]`)
+      if (article.getAttribute("data-session-id") != splitList[1])
+        break;
+      article.remove()
+      let contentHeader = document.querySelector(".content header h2")
+      let newStr = "(" + (Number(contentHeader.innerText.match(regex)[1]) - 1) + ")"
+      contentHeader.innerText = contentHeader.innerText.replace(regex, newStr)
+      break;
+  }
+});
+
 // Dynamically switch LED image between bright/dark according to checkbox
 let ledInputs = document.querySelectorAll(".led-container input[type='checkbox']")
 function switchLedImage(ledImg, isLit) {
@@ -15,8 +104,15 @@ function switchLed(ledContainer, isLit) {
 }
 ledInputs.forEach((el) => el.addEventListener("change", function(event) {
   // event.preventDefault()
-  let ledImg = this.closest(".led-container").querySelector("img.led-image")
+  let article = this.closest("article")
+  let sensorID = article.getAttribute("data-id")
+  let sensorSessionID = article.getAttribute("data-session-id")
+  let ledImg = article.querySelector(".led-container img.led-image")
   switchLedImage(ledImg, this.checked)
+  fetch(`/led/${sensorID}?cmd=${Number(this.checked)}&ssnid=${sensorSessionID}`).then(response => {
+    console.log(`Led on sensor [${sensorID}] requested to state [${this.checked}]. Response:`, response)
+  })
+  // TODO: Could also use MQTT to control sensor LED instead of GET request
 }))
 
 // Switch a sensor's button display to pressed or unpressed

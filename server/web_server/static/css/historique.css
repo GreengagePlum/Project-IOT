@@ -18,12 +18,25 @@
   margin: 30px 0px;
 }
 
-.content article h3 {
+.content article header {
   margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: 0;
   margin-bottom: 10px;
   padding-bottom: 10px;
-  display: block;
+  display: flex;
+  justify-content: left;
   border-bottom: #333 3px solid;
+}
+
+.content article header h3 {
+  margin: 0;
+  display: block;
+}
+
+.content article header .date-details p {
+  color: dimgray;
 }
 
 .content article section {

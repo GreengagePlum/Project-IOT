@@ -17,8 +17,12 @@
 
 <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
 
-{% for script in scripts %}
-<script src="{{ url_for('static', filename=script) }}" defer></script>
+{% for local_script in local_scripts %}
+<script src="{{ url_for('static', filename=local_script) }}" defer></script>
+{% endfor %}
+
+{% for extern_script in extern_scripts %}
+<script src="{{ extern_script }}"></script>
 {% endfor %}
 
 <link rel="preconnect" href="https://fonts.googleapis.com">

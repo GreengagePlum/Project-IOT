@@ -2,13 +2,13 @@
 
 ## Bugs & Fixes
 
-- [ ] Cleanup HTML and CSS
-- [ ] Chop up CSS into logical units
+- [ ]
 
 ## Features
 
-- [ ] Implement sensor name editing
 - [ ] Add charts
+- [ ] Implement sensor name editing
+- [ ] Show if MQTT offline in browser
 - [ ] Ensure responsiveness
 - [ ] Add home page (with real life pictures of the setup)
 - [ ] Implement layout toggle
@@ -30,6 +30,8 @@
 
 ## Done
 
+- [x] Cleanup HTML and CSS
+- [x] Chop up CSS into logical units
 - [x] Write backend server
   - [-] Implement websockets or sse
 - [x] Show error message when no js available

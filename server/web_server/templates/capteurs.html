@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block head %}
-{% with title="Capteurs", scripts=['js/capteurs.js'], stylesheets=['css/capteurs.css'] %}
+{% with title="Capteurs", local_scripts=['js/capteurs.js'], extern_scripts=['https://unpkg.com/mqtt@5.11.0/dist/mqtt.min.js'], stylesheets=['css/capteurs.css'] %}
 {% include 'components/metadata.html' %}
 {% endwith %}
 {% endblock %}

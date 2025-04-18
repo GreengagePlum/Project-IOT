@@ -83,7 +83,7 @@ Example: `capteur02;1743946777.603371;0`
 
 * `button/status`
 
-`<name>;<1|0>`
+`<name>;<session_id>;<1|0>`
 
 `1` indicates a button **PUSH** event, whereas a `0` indicates a button **RELEASE** event.
 

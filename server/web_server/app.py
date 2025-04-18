@@ -1,3 +1,5 @@
+import os
+import pickle
 from flask import Flask
 from flask import request
 from flask import jsonify
@@ -8,6 +10,19 @@ from sqlalchemy.orm import Session
 from models.sensor import Sensor
 from models.sensor import LedStatus
 from models.sensor import ButtonStatus
+from models.sensor import PhotoresistorStatus
+
+FIFO_path = "/tmp/IOC_ERKEN_PRANDO"
+PAYLOAD_seperator = ";"
+
+# Create and open fifo for writing
+try:
+    print("Trying to create read FIFO incoming from web server")
+    os.mkfifo(FIFO_path)
+except FileExistsError:
+    print("Read FIFO already exists")
+print("Opening FIFO...")
+ws_to_mqtt = open(FIFO_path, mode="wb", buffering=0)
 
 app = Flask(__name__)
 
@@ -43,15 +58,12 @@ latest_btn_id_subq = (
 @app.route("/")
 @app.route("/accueil")
 def home_page():
-    print(f"ip: {request.host.split(':')[0]}")
-    print(f"ip: {request.host}")
-    print(f"ip: {request.host_url}")
-    print(f"ip: {request.root_url}")
     return render_template("index.html")
 
 
 @app.route("/capteurs")
 def sensors_page():
+    public_ip = request.host.split(":")[0]
     with Session(engine) as session:
 
         # Main query: join Sensor + LedStatus + ButtonStatus filtered to only the latest per sensor
@@ -75,16 +87,61 @@ def sensors_page():
                 sensor.button_status = []
             sensors.append(sensor)
 
-        return render_template("capteurs.html", sensors=sensors)
+        return render_template("capteurs.html", sensors=sensors, ip=public_ip)
 
 
 @app.route("/historique")
 def history_page():
     with Session(engine) as session:
-        sensors = session.scalars(select(Sensor)).all()
+
+        sensors = session.scalars(
+            select(Sensor).order_by(Sensor.last_seen.desc(), Sensor.id)
+        ).all()
+
+        for sensor in sensors:
+            latest_led = (
+                select(LedStatus)
+                .where(LedStatus.sensor_id == sensor.id)
+                .order_by(LedStatus.date.desc())
+                .limit(10)
+            )
+            latest_btn = (
+                select(ButtonStatus)
+                .where(ButtonStatus.sensor_id == sensor.id)
+                .order_by(ButtonStatus.date.desc())
+                .limit(10)
+            )
+            latest_pres = (
+                select(PhotoresistorStatus)
+                .where(PhotoresistorStatus.sensor_id == sensor.id)
+                .order_by(PhotoresistorStatus.date.desc())
+                .limit(10)
+            )
+            sensor.led_status = session.scalars(latest_led).all()[:10]
+            sensor.button_status = session.scalars(latest_btn).all()[:10]
+            sensor.pres_status = session.scalars(latest_pres).all()[:10]
+
         return render_template("historique.html", sensors=sensors)
+
+
+@app.route("/led/<int:id>")
+def led_command(id):
+    try:
+        cmd = int(request.args["cmd"])
+    except ValueError:
+        abort(400)
+    ssnid = request.args["ssnid"]
+    msg = str(id) + PAYLOAD_seperator + ssnid + PAYLOAD_seperator + str(cmd)
+    pickle.dump(msg, ws_to_mqtt)
+    return ("", 204)
+
+
+@app.route("/sensor/<int:id>")
+def sensor_article(id):
+    with Session(engine) as session:
+        sensor = session.get(Sensor, id)
+        return render_template("components/sensor.html", sensor=sensor)
 
 
 if __name__ == "__main__":
     app.run(debug=True)
-    # app.run()

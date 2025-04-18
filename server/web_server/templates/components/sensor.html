@@ -1,4 +1,4 @@
-<article>
+<article data-id="{{ sensor.id }}" data-session-id="{{ sensor.session_id }}">
   <h3>
     {% if sensor.name != None and sensor.name | length > 0 %}
     {{ sensor.name }}

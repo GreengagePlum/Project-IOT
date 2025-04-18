@@ -58,22 +58,22 @@ if __name__ == "__main__":
         END;
     """
     )
-    sensor_session_check_trigger = DDL(
-        """
-        CREATE TRIGGER sensor_session_id_unique_each_time
-        BEFORE UPDATE
-        ON sensor
-        FOR EACH ROW
-        BEGIN
-            -- Check if the new session id is different than the old one
-            SELECT
-                CASE
-                    WHEN OLD.session_id = NEW.session_id
-                    THEN RAISE(ABORT, 'New session ID must be different than the one before')
-            END;
-        END;
-    """
-    )
+    # sensor_session_check_trigger = DDL(
+    #     """
+    #     CREATE TRIGGER sensor_session_id_unique_each_time
+    #     BEFORE UPDATE
+    #     ON sensor
+    #     FOR EACH ROW
+    #     BEGIN
+    #         -- Check if the new session id is different than the old one
+    #         SELECT
+    #             CASE
+    #                 WHEN OLD.session_id = NEW.session_id
+    #                 THEN RAISE(ABORT, 'New session ID must be different than the one before')
+    #         END;
+    #     END;
+    # """
+    # )
     sensor_joined_at_check_trigger = DDL(
         """
         CREATE TRIGGER sensor_check_join_timestamp_not_in_future
@@ -222,11 +222,11 @@ if __name__ == "__main__":
         "after_create",
         pres_check_trigger.execute_if(dialect="sqlite"),
     )
-    event.listen(
-        Sensor.metadata,
-        "after_create",
-        sensor_session_check_trigger.execute_if(dialect="sqlite"),
-    )
+    # event.listen(
+    #     Sensor.metadata,
+    #     "after_create",
+    #     sensor_session_check_trigger.execute_if(dialect="sqlite"),
+    # )
     event.listen(
         Sensor.metadata,
         "after_create",
