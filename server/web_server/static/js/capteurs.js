@@ -53,7 +53,21 @@ client.on("message", (topic, message) => {
       switchButton(btnContainer, Boolean(Number(splitList[2])))
       break;
     case "photoresistor/status":
-      // TODO: implement real time chart here...
+      splitList = payloadStr.split(";")
+      article = document.querySelector(`.content article[data-id="${splitList[0]}"]`)
+      if (article.getAttribute("data-session-id") != splitList[1])
+        break;
+      while (chartMap[splitList[0]].data.labels.length >= 10) {
+        chartMap[splitList[0]].data.labels.shift()
+        chartMap[splitList[0]].data.datasets.forEach((dataset) => {
+          dataset.data.shift()
+        })
+      }
+      chartMap[splitList[0]].data.labels.push(new Date().timeNow())
+      chartMap[splitList[0]].data.datasets.forEach((dataset) => {
+        dataset.data.push(Number(splitList[2]))
+      })
+      chartMap[splitList[0]].update()
       break;
     case "state/join":
       if (!payloadStr.includes(";"))
@@ -88,7 +102,7 @@ client.on("message", (topic, message) => {
 });
 
 // Dynamically switch LED image between bright/dark according to checkbox
-let ledInputs = document.querySelectorAll(".led-container input[type='checkbox']")
+const ledInputs = document.querySelectorAll(".led-container input[type='checkbox']")
 function switchLedImage(ledImg, isLit) {
   if (ledImg.classList.contains("active") && !isLit) {
     ledImg.classList.remove("active")
@@ -127,6 +141,75 @@ function switchButton(buttonContainer, isPushed) {
     btnLabel.innerText = "(relaché)"
   }
 }
+
+// For the time now
+Date.prototype.timeNow = function () {
+     return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds();
+}
+
+const contexts = document.querySelectorAll("article .light-chart canvas")
+let chartMap = {}
+contexts.forEach((ctx) => {
+  const id = ctx.closest("article").getAttribute("data-id")
+  let chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [{
+        label: 'Luminosité',
+        data: [],
+        borderWidth: 3,
+        borderColor: 'rgb(255, 99, 132)',
+        fill: false,
+        cubicInterpolationMode: 'monotone',
+        tension: 0.4
+      }]
+    },
+    options: {
+      color: '#333',
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: 'Chart.js Line Chart - Cubic interpolation mode'
+        },
+        legend: {
+          display: false
+        },
+        title: {
+          display: false
+        }
+      },
+      interaction: {
+        intersect: false,
+      },
+      scales: {
+        x: {
+          display: true,
+          title: {
+            display: true,
+            text: 'Estampille temporelle en UTC'
+          }
+        },
+        y: {
+          display: true,
+          title: {
+            display: true,
+            text: 'Valeur en %'
+          },
+          min: 0,
+          max: 100,
+          ticks: {
+            callback: function(value, index, ticks) {
+              return value + "%";
+            }
+          }
+        }
+      }
+    }
+  })
+  chartMap[id] = chart
+})
 
 // Local filtering function to filter sensor names
 document.addEventListener('DOMContentLoaded', function () {
