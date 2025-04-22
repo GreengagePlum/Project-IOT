@@ -39,7 +39,7 @@ client.on("message", (topic, message) => {
     case "led/status":
       splitList = payloadStr.split(";")
       article = document.querySelector(`.content article[data-id="${splitList[0]}"]`)
-      if (article.getAttribute("data-session-id") != splitList[1])
+      if (article == null || article.getAttribute("data-session-id") != splitList[1])
         break;
       let ledContainer = article.querySelector(".led-container")
       switchLed(ledContainer, Boolean(Number(splitList[2])))
@@ -47,7 +47,7 @@ client.on("message", (topic, message) => {
     case "button/status":
       splitList = payloadStr.split(";")
       article = document.querySelector(`.content article[data-id="${splitList[0]}"]`)
-      if (article.getAttribute("data-session-id") != splitList[1])
+      if (article == null || article.getAttribute("data-session-id") != splitList[1])
         break;
       let btnContainer = article.querySelector(".push-button-container")
       switchButton(btnContainer, Boolean(Number(splitList[2])))
@@ -55,7 +55,7 @@ client.on("message", (topic, message) => {
     case "photoresistor/status":
       splitList = payloadStr.split(";")
       article = document.querySelector(`.content article[data-id="${splitList[0]}"]`)
-      if (article.getAttribute("data-session-id") != splitList[1])
+      if (article == null || article.getAttribute("data-session-id") != splitList[1])
         break;
       while (chartMap[splitList[0]].data.labels.length >= 10) {
         chartMap[splitList[0]].data.labels.shift()
@@ -79,6 +79,10 @@ client.on("message", (topic, message) => {
           .then(response => response.text()) // TODO: Manage errors here if server malfunctions
           .then(data => {
             document.querySelector(".content article").insertAdjacentHTML("beforebegin", data)
+            const ctx = document.querySelector(`.content article[data-id="${splitList[0]}"] .light-chart canvas`)
+            let chart = new Chart(ctx, config)
+            chartMap[splitList[0]] = chart
+
             let contentHeader = document.querySelector(".content header h2")
             let newStr = "(" + (Number(contentHeader.innerText.match(regex)[1]) + 1) + ")"
             contentHeader.innerText = contentHeader.innerText.replace(regex, newStr)
@@ -91,7 +95,7 @@ client.on("message", (topic, message) => {
     case "state/leave":
       splitList = payloadStr.split(";")
       article = document.querySelector(`.content article[data-id="${splitList[0]}"]`)
-      if (article.getAttribute("data-session-id") != splitList[1])
+      if (article == null || article.getAttribute("data-session-id") != splitList[1])
         break;
       article.remove()
       let contentHeader = document.querySelector(".content header h2")
@@ -149,9 +153,7 @@ Date.prototype.timeNow = function () {
 
 const contexts = document.querySelectorAll("article .light-chart canvas")
 let chartMap = {}
-contexts.forEach((ctx) => {
-  const id = ctx.closest("article").getAttribute("data-id")
-  let chart = new Chart(ctx, {
+const config = {
     type: 'line',
     data: {
       labels: [],
@@ -207,7 +209,10 @@ contexts.forEach((ctx) => {
         }
       }
     }
-  })
+  }
+contexts.forEach((ctx) => {
+  const id = ctx.closest("article").getAttribute("data-id")
+  let chart = new Chart(ctx, config)
   chartMap[id] = chart
 })
 

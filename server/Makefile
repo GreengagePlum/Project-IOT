@@ -15,10 +15,10 @@ help:
 	@echo ""
 
 debug:
-	python -m flask --app web_server/app run --debug
+	cd web_server/ && python -m flask --app app run --debug
 
 prod:
-	gunicorn -w 4 'web_server.app:app'
+	cd web_server/ && gunicorn -w 4 -b '0.0.0.0' 'app:app'
 
 broker:
 	cd mqtt/ && mosquitto -c mosquitto.conf

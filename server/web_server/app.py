@@ -28,7 +28,7 @@ app = Flask(__name__)
 
 # Create the database connectivity via sqlalchemy
 engine = create_engine(
-    "sqlite:///db/db.sqlite3",
+    "sqlite:///../db/db.sqlite3",
     echo=False,
     hide_parameters=False,
     execution_options={"isolation_level": "SERIALIZABLE"},
