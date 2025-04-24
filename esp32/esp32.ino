@@ -102,20 +102,20 @@ WiFiClient client; // ne pas utiliser la version secure
 Adafruit_MQTT_Client mqtt(&client, MQTT_BROKER, BROKER_PORT, ID_ESP, "");
 
 Adafruit_MQTT_Subscribe led_cmd = Adafruit_MQTT_Subscribe(&mqtt, ID_ESP FEED_LEDCOMMAND, 1); // doit étre 1
-Adafruit_MQTT_Subscribe name_ass = Adafruit_MQTT_Subscribe(&mqtt, ID_ESP FEED_STATENAME, 2);
+Adafruit_MQTT_Subscribe name_ass = Adafruit_MQTT_Subscribe(&mqtt, ID_ESP FEED_STATENAME, 0);
 
 Adafruit_MQTT_Publish led_status = Adafruit_MQTT_Publish(&mqtt, ID_ESP FEED_LEDSTATUS,1);
 Adafruit_MQTT_Publish bt_status = Adafruit_MQTT_Publish(&mqtt, ID_ESP FEED_BUTTONSTATUS,0);
 Adafruit_MQTT_Publish pr_status = Adafruit_MQTT_Publish(&mqtt, ID_ESP FEED_PHOTOSTATUS,0);
 
-Adafruit_MQTT_Publish st_join = Adafruit_MQTT_Publish(&mqtt, ID_ESP FEED_STATEJOIN,2);
-Adafruit_MQTT_Publish st_leave = Adafruit_MQTT_Publish(&mqtt, ID_ESP FEED_STATELEAVE,2);
+Adafruit_MQTT_Publish st_join = Adafruit_MQTT_Publish(&mqtt, ID_ESP FEED_STATEJOIN,0);
+Adafruit_MQTT_Publish st_leave = Adafruit_MQTT_Publish(&mqtt, ID_ESP FEED_STATELEAVE,0);
 
-char * name_esp = "TEST"; 	// Uniquement pour le test, normalement remplacé aprés reception du message nameAssign
-int lg_name_esp = 4;		// Longeur de la chaine
+char * name_esp; 		// Uniquement pour le test, normalement remplacé aprés reception du message nameAssign
+int lg_name_esp = 0;	// Longeur de la chaine
 
-char * session = "12345";
-int lg_session = 5;
+char * session;
+int lg_session = 0;
 
 bool pre_led;	// Etat led
 int pre_bp;		// Etat bp
@@ -283,25 +283,27 @@ void command_led(char * message, uint16_t len){
 	}
 }
 
-void set_lwt(){
+bool set_lwt(){
 	int jm_len = (lg_name_esp + lg_session + 2);
-	char * join_mess = (char*)malloc(jm_len);
+	char * join_mess = (char*)malloc(jm_len); // pas de free car utilisé par will
 
 	if(join_mess){
 		snprintf(join_mess,jm_len,"%s;%s",name_esp,session);
 
-		MQTT_send(&st_leave,join_mess);
+		//MQTT_send(&st_leave,join_mess);
 		mqtt.disconnect();
 
 		Serial.println("LTW Disconnect");
 
 		delay(5000);
+		mqtt.will(FEED_STATELEAVE, join_mess, 0, 0); //LWT
 
 		mqtt.connect();
 		MQTT_send(&st_join,join_mess);
-
+		return 0;
 	} else {
-		  Serial.println(F("Error join message malloc"));
+		Serial.println(F("Error join message malloc"));
+		return 1;
 	}
 
 }
@@ -367,18 +369,19 @@ void mqtt_setup(){
   Serial.println("MAC: ");
   Serial.println(mac);
 
-  MQTT_send(&st_join,mac);
-
   //Reception nom + session
-  mqtt.processPackets(5000);
-
+  while(!lg_name_esp || !lg_session){
+    Serial.println("Trying getting info ");
+    MQTT_send(&st_join,mac);
+    mqtt.processPackets(5000);
+  }
   /* mqtt.processSubscriptionPacket(&name_ass); // Unstable */
 
   Serial.println("Start LWT");
 
   // LWT
 
-  set_lwt();
+  while(set_lwt()); // Boucle au cas ou malloc ne réussi pas 
 
   // command
 
