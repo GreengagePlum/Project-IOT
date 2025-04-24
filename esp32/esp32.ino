@@ -313,7 +313,7 @@ void i_state_photo(){
 	Serial.println("i state photo");
 
 	if(photo){
-		snprintf(photo,lg_photo,"%s;%s;%d",name_esp,session,lum()/41);
+		snprintf(photo,lg_photo,"%s;%s;%d",name_esp,session,(100-(lum()/41)));
 		MQTT_send(&pr_status,photo);
 		free(photo);
 	} else {
@@ -333,7 +333,7 @@ void mqtt_setup(){
   Serial.begin(115200);
 
   pinMode(23,INPUT_PULLUP);
-  pre_bp = digitalRead(23);
+  pre_bp = !(digitalRead(23)); // inversion car pull-up
 
   delay(1000);
 
@@ -403,10 +403,10 @@ void bp_loop(struct Timer * clk) {
   char * bp = (char *)malloc(lg_bp);
 
   Serial.println(pre_bp);
-  Serial.println(digitalRead(23));
+  Serial.println(!(digitalRead(23)));
 
-	if(pre_bp != digitalRead(23)){
-		pre_bp = digitalRead(23);
+	if(pre_bp == digitalRead(23)){ //inversé
+		pre_bp = !(digitalRead(23));
 
 		if(bp){
 			snprintf(bp,lg_bp,"%s;%s;%d",name_esp,session,pre_bp);
