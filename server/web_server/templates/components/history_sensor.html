@@ -1,0 +1,57 @@
+<article>
+  <header>
+    <h3>
+      {% if sensor.name != None and sensor.name | length > 0 %}
+      {{ sensor.name }}
+      {% else %}
+      Capteur #{{ sensor.id }}
+      {% endif %}
+    </h3>
+    <div class="date-details">
+      <p>Date d'adhésion : [{{ sensor.joined_at }}]</p>
+      <p>Date de dernière vue : [{{ sensor.last_seen }}]</p>
+    </div>
+  </header>
+  <section class="led">
+    <h4>LED 🚨</h4>
+    <div class="led-container">
+      <ul>
+        {% if sensor.led_status | length == 0 %}
+        <li>❌ Pas encore de valeurs enregistrées</li>
+        {% else %}
+        {% for led in sensor.led_status %}
+        <li>[{{ led.date }}] - Etat : {{ "Allumé" if led.status else "Eteint" }}</li>
+        {% endfor %}
+        {% endif %}
+      </ul>
+    </div>
+  </section>
+  <section class="push-button">
+    <h4>Bouton poussoir 🔘</h4>
+    <div class="push-button-container">
+      <ul>
+        {% if sensor.button_status | length == 0 %}
+        <li>❌ Pas encore de valeurs enregistrées</li>
+        {% else %}
+        {% for button in sensor.button_status %}
+        <li>[{{ button.date }}] - Etat : {{ "Appuyé" if button.status else "Relaché" }}</li>
+        {% endfor %}
+        {% endif %}
+      </ul>
+    </div>
+  </section>
+  <section class="light">
+    <h4>Photorésistance 💡</h4>
+    <div class="light-container">
+      <ul>
+        {% if sensor.pres_status | length == 0 %}
+        <li>❌ Pas encore de valeurs enregistrées</li>
+        {% else %}
+        {% for pres in sensor.pres_status %}
+        <li>[{{ pres.date }}] - Valeur : {{ pres.status }}%</li>
+        {% endfor %}
+        {% endif %}
+      </ul>
+    </div>
+  </section>
+</article>

@@ -1,0 +1,43 @@
+<article data-id="{{ sensor.id }}" data-session-id="{{ sensor.session_id }}">
+  <h3>
+    {% if sensor.name != None and sensor.name | length > 0 %}
+    {{ sensor.name }}
+    {% else %}
+    Capteur #{{ sensor.id }}
+    {% endif %}
+  </h3>
+  <section class="led">
+    <h4>LED</h4>
+    <div class="led-container">
+      <img src="{{ url_for('static', filename='assets/blue-led.png') }}" alt="L'état LED" class="led-image {{ 'active' if sensor.led_status | length > 0 and sensor.led_status[0].status }}" title="L'état LED">
+      <form>
+        <div>
+          <input type="checkbox" id="led-toggle" name="led" value="on" autocomplete="off" {{ "checked" if sensor.led_status | length > 0 and sensor.led_status[0].status }} />
+          <label for="led-toggle">Allumer/éteindre LED</label>
+          <!-- <input type="hidden" name="led" value="off" /> -->
+        </div>
+      </form>
+    </div>
+  </section>
+  <section class="push-button">
+    <h4>Bouton poussoir</h4>
+    <div class="push-button-container">
+      <img src="
+              {% if sensor.button_status | length > 0 and sensor.button_status[0].status %}
+                {{ url_for('static', filename='assets/buttons/pressed-button-arrow-v2.png') }}
+              {% else %}
+                {{ url_for('static', filename='assets/buttons/unpressed-button.png') }}
+              {% endif %}"
+        alt="L'état du bouton poussoir" class="push-button-image" title="L'état du bouton poussoir">
+      <p class="push-button-status">{{ "(appuyé)" if sensor.button_status | length > 0 and sensor.button_status[0].status else "(relaché)" }}</p>
+    </div>
+  </section>
+  <section class="light">
+    <h4>Photorésistance</h4>
+    <div class="light-container">
+      <div class="light-chart">
+        <canvas></canvas>
+      </div>
+    </div>
+  </section>
+</article>

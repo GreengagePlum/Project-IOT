@@ -1,13 +1,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capteurs IOT</title>
+<title>
+  {{ title }} - Capteurs IOT
+</title>
 <link rel="icon" type="image/png" href="{{ url_for('static', filename='assets/logo.png') }}">
 <meta name="keywords" content="IOT, capteurs, connectés, domotique, lumière, bouton poussoir, LED">
 <meta name="description" content="Un site pour visualiser et gérer de multiples capteurs connectés ESP32.">
 <meta name="author" content="Efe ERKEN, Sylvain PRANDO">
 <!-- <meta http-equiv="refresh" content="30"> -->
+
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+{% for stylesheet in stylesheets %}
+<link rel="stylesheet" href="{{ url_for('static', filename=stylesheet) }}">
+{% endfor %}
+
 <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+
+{% for local_script in local_scripts %}
+<script src="{{ url_for('static', filename=local_script) }}" defer></script>
+{% endfor %}
+
+{% for extern_script in extern_scripts %}
+<script src="{{ extern_script }}"></script>
+{% endfor %}
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
