@@ -48,7 +48,7 @@
         <li>❌ Pas encore de valeurs enregistrées</li>
         {% else %}
         {% for pres in sensor.pres_status %}
-        <li>[{{ pres.date }}] - Valeur : {{ pres.status }}%</li>
+        <li>[{{ pres.date }}] - Luminosité : {{ pres.status }}%</li>
         {% endfor %}
         {% endif %}
       </ul>

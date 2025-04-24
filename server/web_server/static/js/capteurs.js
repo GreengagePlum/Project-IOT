@@ -79,9 +79,13 @@ client.on("message", (topic, message) => {
           .then(response => response.text()) // TODO: Manage errors here if server malfunctions
           .then(data => {
             document.querySelector(".content article").insertAdjacentHTML("beforebegin", data)
+
             const ctx = document.querySelector(`.content article[data-id="${splitList[0]}"] .light-chart canvas`)
             let chart = new Chart(ctx, config)
             chartMap[splitList[0]] = chart
+
+            const ledInput = document.querySelector(`.content article[data-id="${splitList[0]}"] .led-container input[type='checkbox']`)
+            ledInput.addEventListener("change", ledFormEventHandler)
 
             let contentHeader = document.querySelector(".content header h2")
             let newStr = "(" + (Number(contentHeader.innerText.match(regex)[1]) + 1) + ")"
@@ -107,20 +111,9 @@ client.on("message", (topic, message) => {
 
 // Dynamically switch LED image between bright/dark according to checkbox
 const ledInputs = document.querySelectorAll(".led-container input[type='checkbox']")
-function switchLedImage(ledImg, isLit) {
-  if (ledImg.classList.contains("active") && !isLit) {
-    ledImg.classList.remove("active")
-  } else if (!ledImg.classList.contains("active") && isLit) {
-    ledImg.classList.add("active")
-  }
-}
-function switchLed(ledContainer, isLit) {
-  let img = ledContainer.querySelector("img.led-image")
-  let checkbox = ledContainer.querySelector("#led-toggle")
-  switchLedImage(img, isLit)
-  checkbox.checked = isLit
-}
-ledInputs.forEach((el) => el.addEventListener("change", function(event) {
+ledInputs.forEach((el) => el.addEventListener("change", ledFormEventHandler))
+
+function ledFormEventHandler(event) {
   // event.preventDefault()
   let article = this.closest("article")
   let sensorID = article.getAttribute("data-id")
@@ -131,7 +124,22 @@ ledInputs.forEach((el) => el.addEventListener("change", function(event) {
     console.log(`Led on sensor [${sensorID}] requested to state [${this.checked}]. Response:`, response)
   })
   // TODO: Could also use MQTT to control sensor LED instead of GET request
-}))
+}
+
+function switchLedImage(ledImg, isLit) {
+  if (ledImg.classList.contains("active") && !isLit) {
+    ledImg.classList.remove("active")
+  } else if (!ledImg.classList.contains("active") && isLit) {
+    ledImg.classList.add("active")
+  }
+}
+
+function switchLed(ledContainer, isLit) {
+  let img = ledContainer.querySelector("img.led-image")
+  let checkbox = ledContainer.querySelector("#led-toggle")
+  switchLedImage(img, isLit)
+  checkbox.checked = isLit
+}
 
 // Switch a sensor's button display to pressed or unpressed
 function switchButton(buttonContainer, isPushed) {
