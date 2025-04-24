@@ -72,16 +72,16 @@ enum {STANDARD, MOUVEMENT}; // Type esp32
 
 #define ID_ESP ""
 
-#define FEED_LEDCOMMAND "/led/command"  //IN
+#define FEED_LEDCOMMAND "led/command"  //IN
 
-#define FEED_LEDSTATUS "/led/status"	//OUT
-#define FEED_BUTTONSTATUS "/button/status"	//OUT
-#define FEED_PHOTOSTATUS "/photoresistor/status" //OUT
+#define FEED_LEDSTATUS "led/status"	//OUT
+#define FEED_BUTTONSTATUS "button/status"	//OUT
+#define FEED_PHOTOSTATUS "photoresistor/status" //OUT
 
 
-#define FEED_STATEJOIN "/state/join"	//OUT
-#define FEED_STATELEAVE "/state/leave"	//BI?
-#define FEED_STATENAME "/state/nameAssign"	//IN
+#define FEED_STATEJOIN "state/join"	//OUT
+#define FEED_STATELEAVE "state/leave"	//OUT
+#define FEED_STATENAME "state/nameAssign"	//IN
 
 
 /******************** Configuration **********************/
@@ -350,6 +350,7 @@ void mqtt_setup(){
 
   // FIN WIFI DEBUT MQTT
 
+	mqtt.setKeepAliveInterval(5);
 
   name_ass.setCallback(set_name);
   mqtt.subscribe(&name_ass);
