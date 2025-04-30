@@ -1,0 +1,7 @@
+{% with title="Capteurs enregistrés (" ~ sensors | length ~ ")" %}
+{% include 'components/content_sensor_header.html' %}
+{% endwith %}
+
+{% for sensor in sensors %}
+{% include 'components/history_sensor.html' %}
+{% endfor %}

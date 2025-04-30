@@ -1,0 +1,7 @@
+{% with title="Capteurs connectés (" ~ sensors | length ~ ")" %}
+{% include 'components/content_sensor_header.html' %}
+{% endwith %}
+
+{% for sensor in sensors %}
+{% include 'components/sensor.html' %}
+{% endfor %}

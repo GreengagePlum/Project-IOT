@@ -1,15 +1,18 @@
 {% extends 'base.html' %}
 
 {% block head %}
+{% with title="Accueil" %}
 {% include 'components/metadata.html' %}
+{% endwith %}
 {% endblock %}
 
 {% block header %}
+{% include 'components/noscript.html' %}
 {% include 'components/header.html' %}
 {% endblock %}
 
 {% block content %}
-{% include 'components/content_sensor.html' %}
+  <p style="display: block; height: 60vh;">En construction...</p>
 {% endblock %}
 
 {% block footer %}

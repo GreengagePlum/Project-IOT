@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block head %}
+{% with title="Historique", local_scripts=['js/historique.js'], stylesheets=['css/historique.css'] %}
+{% include 'components/metadata.html' %}
+{% endwith %}
+{% endblock %}
+
+{% block header %}
+{% include 'components/noscript.html' %}
+{% include 'components/header.html' %}
+{% endblock %}
+
+{% block content %}
+{% include 'components/content_history.html' %}
+{% endblock %}
+
+{% block footer %}
+{% include 'components/footer.html' %}
+{% endblock %}

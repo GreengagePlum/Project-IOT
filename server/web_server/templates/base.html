@@ -10,7 +10,7 @@
   {% block header %}
   {% endblock %}
   <main>
-    <div class="content">
+      <div class="content" {{ 'data-ip=' ~ ip if ip != None and ip | length > 0 }}>
       {% block content %}
       {% endblock %}
     </div>
