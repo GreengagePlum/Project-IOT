@@ -34,6 +34,7 @@ client.on("message", (topic, message) => {
   let payloadStr = message.toString()
   console.log("Received message:", topic, payloadStr);
   let article = null
+  let splitList = []
   const regex = /\((\d+)\)/
   switch (topic) {
     case "led/status":
@@ -75,13 +76,15 @@ client.on("message", (topic, message) => {
       splitList = payloadStr.split(";")
       article = document.querySelector(`.content article[data-id="${splitList[0]}"]`)
       if (article == null) {
+        // TODO: Potential data race with this fetch in the case of the join of a completely new sensor and if the
+        // server didn't yet have the time to create a database record for it. Should maybe implement retries...
         fetch(`/sensor/${splitList[0]}`)
           .then(response => response.text()) // TODO: Manage errors here if server malfunctions
           .then(data => {
-            document.querySelector(".content article").insertAdjacentHTML("beforebegin", data)
+            document.querySelector(".content header").insertAdjacentHTML("afterend", data)
 
             const ctx = document.querySelector(`.content article[data-id="${splitList[0]}"] .light-chart canvas`)
-            let chart = new Chart(ctx, config)
+            let chart = new Chart(ctx, createChartConfig())
             chartMap[splitList[0]] = chart
 
             const ledInput = document.querySelector(`.content article[data-id="${splitList[0]}"] .led-container input[type='checkbox']`)
@@ -93,7 +96,7 @@ client.on("message", (topic, message) => {
           })
           .catch(error => console.error(error));
       } else {
-        article.getAttribute("data-session-id", splitList[1])
+        article.setAttribute("data-session-id", splitList[1])
       }
       break;
     case "state/leave":
@@ -102,6 +105,7 @@ client.on("message", (topic, message) => {
       if (article == null || article.getAttribute("data-session-id") != splitList[1])
         break;
       article.remove()
+      delete chartMap[splitList[0]]
       let contentHeader = document.querySelector(".content header h2")
       let newStr = "(" + (Number(contentHeader.innerText.match(regex)[1]) - 1) + ")"
       contentHeader.innerText = contentHeader.innerText.replace(regex, newStr)
@@ -161,66 +165,68 @@ Date.prototype.timeNow = function () {
 
 const contexts = document.querySelectorAll("article .light-chart canvas")
 let chartMap = {}
-const config = {
-    type: 'line',
-    data: {
-      labels: [],
-      datasets: [{
-        label: 'Luminosité',
-        data: [],
-        borderWidth: 3,
-        borderColor: 'rgb(255, 99, 132)',
-        fill: false,
-        cubicInterpolationMode: 'monotone',
-        tension: 0.4
-      }]
-    },
-    options: {
-      color: '#333',
-      responsive: true,
-      plugins: {
-        title: {
-          display: true,
-          text: 'Chart.js Line Chart - Cubic interpolation mode'
-        },
-        legend: {
-          display: false
-        },
-        title: {
-          display: false
-        }
+function createChartConfig() {
+  return {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Luminosité',
+          data: [],
+          borderWidth: 3,
+          borderColor: 'rgb(255, 99, 132)',
+          fill: false,
+          cubicInterpolationMode: 'monotone',
+          tension: 0.4
+        }]
       },
-      interaction: {
-        intersect: false,
-      },
-      scales: {
-        x: {
-          display: true,
+      options: {
+        color: '#333',
+        responsive: true,
+        plugins: {
           title: {
             display: true,
-            text: 'Estampille temporelle en UTC'
+            text: 'Chart.js Line Chart - Cubic interpolation mode'
+          },
+          legend: {
+            display: false
+          },
+          title: {
+            display: false
           }
         },
-        y: {
-          display: true,
-          title: {
+        interaction: {
+          intersect: false,
+        },
+        scales: {
+          x: {
             display: true,
-            text: 'Valeur en %'
+            title: {
+              display: true,
+              text: 'Estampille temporelle en UTC'
+            }
           },
-          min: 0,
-          max: 100,
-          ticks: {
-            callback: function(value, index, ticks) {
-              return value + "%";
+          y: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Valeur en %'
+            },
+            min: 0,
+            max: 100,
+            ticks: {
+              callback: function(value, index, ticks) {
+                return value + "%";
+              }
             }
           }
         }
       }
     }
-  }
+}
 contexts.forEach((ctx) => {
   const id = ctx.closest("article").getAttribute("data-id")
-  let chart = new Chart(ctx, config)
+  let chart = new Chart(ctx, createChartConfig())
   chartMap[id] = chart
 })
 
