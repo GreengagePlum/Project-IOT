@@ -5,7 +5,14 @@
 
 Here is [a programming project](https://github.com/GreengagePlum/Project-IOT) in **Arduino C** and **Python** that aims to create and monitor an network of IOT sensors. The subject paper for the project is [available here](./IOC_mode_projet%20–%20SESI.pdf) for more details.
 
-This project uses the [Flask](https://flask.palletsprojects.com/en/stable/) framework on the web server side.
+This project uses:
+
+* the [Flask](https://flask.palletsprojects.com/en/stable/) framework on the web server side
+* the [Eclipse Paho](https://github.com/eclipse-paho/paho.mqtt.python?tab=readme-ov-file) library for the MQTT communications inside the server side MQTT client.
+* [Mosquitto](https://mosquitto.org/) as the MQTT broker
+* [SQLite](https://sqlite.org/index.html) for the database
+* [Arduino IDE](https://www.arduino.cc/en/software/) for development on the ESP32s
+* the [ESP32 Espressif](https://github.com/espressif/arduino-esp32) and the [MQTT Adafruit](https://docs.arduino.cc/libraries/adafruit-mqtt-library/) libraries
 
 ## A preview
 
@@ -22,7 +29,7 @@ This programming project was carried out for the IOC (IOT) class of the Computer
 
 ### C
 
-The Arduino variant of C is used along with the Arduino IDE (**v2.3.4**) as the compiler. The ESP32 library used along with the Arduino IDE is `esp32` by Espressif (**v1.0.6**).
+The Arduino variant of C is used along with the Arduino IDE (**v2.3.4**) as the compiler. The ESP32 library used along with the Arduino IDE is `esp32` by Espressif (**v2.0.17**) as well as the MQTT library by Adafruit (**v2.5.9**).
 
 As one of us is working on a Mac computer (macOS **Sequoia 15.3.2**), the additional drivers required and their versions are as follows:
 
@@ -31,7 +38,7 @@ As one of us is working on a Mac computer (macOS **Sequoia 15.3.2**), the additi
 
 ### Python
 
-Right below are the different versions of Python we used for the web server:
+Right below are the different versions of Python we used for the web server as well as for the server side MQTT client:
 
 ```text
 Python 3.11.3
@@ -41,7 +48,8 @@ Python 3.11.3
 
 ### How to build and execute?
 
-_Under construction..._
+* For instructions concerning the "server" components, see [the server README](/server/README.md#usage).
+* For instructions concerning the ESP32s, _Under construction..._
 
 ## License
 

@@ -28,8 +28,6 @@
 
 ## Miscellaneous
 
-- [ ] Test on RBPi 3
-  - [ ] Check if in memory sqlite makes a performance difference
 - [ ] Test on other machines/browsers
 - [ ] Add better hierarchy to MQTT channels
 - [ ] Add EN/FR language switch to the website
@@ -37,6 +35,8 @@
 
 ## Done
 
+- [x] Test on RBPi 3
+  - [-] Check if in memory sqlite makes a performance difference
 - [x] Add charts
 - [x] Cleanup HTML and CSS
 - [x] Chop up CSS into logical units
