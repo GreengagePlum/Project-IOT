@@ -1,25 +1,235 @@
 # Server side programs
 
-Here you can find a description of the "server" side components of the system including the web server, the MQTT client
-for the web server and more. They are all organized into their own subfolders.
+Here you can find a description of the "server" side components of the system including the web server, the server side MQTT client
+and more. They are all organized into their own subfolders. A list of the notable files and folders (including residual
+files) is as follows:
+
+* `db/`: Database schemas and configuration files
+  * `db/models/`: Database schemas, dummy data for testing and the script to create the SQLite database
+  * `db/db.sqlite3`: The SQLite database file (if you already created it)
+* `mqtt/`: This is where the server side MQTT related components reside.
+  * `mqtt/mqtt_client/`: server side MQTT client source files. It is a Python package.
+  * `mqtt/mosquitto.conf`: `mosquitto` MQTT broker configuration file tailored for our project's needs
+  * `mqtt/mosquitto.log`: `mosquitto` MQTT broker log file (if you launched it before)
+* `web_server/`: Flask web server source files as well as frontend web UI files and assets.
+
+When designing and implementing the server side components, certain assumptions were made to limit code complexity and
+shorten development time. It is assumed that the server components are always online and without failure. They are
+assumed to always have been launched before any ESP32 device starts running. And thus, from an ESP32 point of view, the
+server components are always available. The design also assumes an MQTT keepalive time of 5 seconds for ESP32s and the use of LWT messages to properly keep track of any unintended disconnects. The design also considers the MQTT QoS values to be respected to properly function (see [further below](#mqtt-communications-specification)). And lastly it is assumed that between the moment the `/capteurs` page is requested from the web server and the moment the page loads and connects to the MQTT broker (the critical section), there are no ESP32 connection or disconnect events (so either before or after, otherwise the web UI can't update in real time without a refresh, see [further below](#python-flask-web-server)). These aspects could be circled back on later to improve the overall robustness of the whole system if need be by of course introducing more or less complexity and additional development time.
 
 ## Usage
 
-Use the given `Makefile` to launch each program. `make help` should display a list of things you can do. This includes
-launching the web server, the MQTT broker and the MQTT server side client. You should make sure to have **Python 3.9+**
-along with the dependencies in `requirements.txt` installed via `pip` (preferably in a virtual environment). External
-dependencies also include the programs `sqlite3` and `mosquitto`.
+Use the given `Makefile` to launch each program or "component". `make help` should display a list of things you can do. This includes
+launching the web server, the MQTT broker and the MQTT server side client. You should make sure to have at least **Python 3.9+**
+along with the dependencies in `requirements.txt` installed via `pip` (preferably in a virtual environment). **External
+dependencies** also include the programs `sqlite3` and `mosquitto`.
 
-## Python Flask web server
+One example of the suite of commands could be the following after having checked your Python version with `python
+--version` (in this current `server/` directory):
 
-_Under construction..._
+```sh
+python -m venv .venv # Create a Python virtual environment (optional)
+. .venv/bin/activate # Activate the created virtual environment (optional)
+python -m pip install --upgrade pip # Update `pip` to the latest version (optional but recommended)
 
-## MQTT
+pip install -r requirements.txt # Install all the necessary Python dependencies
+make clean # Remove the SQLite database (just in case it was leftover, this removes all the data!)
+make db # Create the SQLite database
+```
+
+Then you can either use 3 separate terminals or a tool like `screen` to multiplex a single terminal and put processes in
+the background to launch the 3 core components of the "server" (make sure to have your virtual environment activated if
+you created one before any of these commands)
+
+```sh
+make broker # Launches the `mosquitto` MQTT broker with our project's custom configuration
+make client # Launches the server side Python MQTT client
+make prod # Launches the Flask app with the production Python web server `gunicorn` on all IPs (port 8000)
+```
+
+There is also the following commands `make data` and `make debug` to insert some dummy (incoherent) data to the database for
+testing purposes and also to launch the Flask debugging web server that binds only to the localhost IP for development
+purposes respectively.
+
+### Couple things to note
+
+In general the database has to have been created before any component is launched except for the MQTT broker of course
+which is a completely independent component. You don't have to recreate or reset the database every time but only when you
+want to start fresh or after initial cloning of this Git repository of course.
+
+As far as the order in which to launch the 3 components, you should at least launch the MQTT broker first before the
+others and make sure it successfully launched and is running before moving on to the rest.
+
+#### MQTT broker
+
+* Make sure to have the ports 1883 and 9001 free and available on your machine. There could for example be a systemd
+MQTT service running on this port (1883) in the background that you might need to stop.
+* Make sure your machine's firewall is disabled to accept connections coming from the ESP32s to the MQTT broker from your local network.
+
+#### MQTT client
+
+* It is necessary to have the web server also running for the client to fully come online since otherwise it will block
+  on opening the POSIX pipe for reading until a writer also opens it. This can be simulated via `exec 3> /tmp/IOC_ERKEN_PRANDO` to open
+  the pipe for writing and to unblock the MQTT client if you only want to run it and not the other components. But since
+  this is an MQTT client it at least needs the broker to be running to function. You can also use `exec 3>&-` to close
+the pipe for writing and thus send an `EOF` to the client.
+
+#### Web server
+
+* It is necessary to have the MQTT client also running for the web server to fully come online since otherwise it will block
+  on opening the POSIX pipe for writing until a reader also opens it. This can be simulated via `cat /tmp/IOC_ERKEN_PRANDO` to open
+  the pipe for reading and to unblock the web server if you only want to run it and not the other components.
+* Make sure to have the port 8000 (for the production server) or the port 5000 for the Flask debug server free and
+available on your machine.
+
+## Details on each "component"
+
+### MQTT broker
+
+A custom configuration file is created for the `mosquitto` MQTT broker. This includes:
+
+* Logging to the file `mqtt/mosquitto.log` in parallel to `stderr`.
+* A maximum allowed client keepalive value of 12 seconds.
+* A maximum allowed packet size of 200 bytes.
+* Disabling persistence of the broker.
+* Creating listeners
+  * A listener on the port 1883 (default) listening on all IPv4 and IPv6 addresses and not just localhost
+  * A websocket listener on the port 9001 listening on all IPv4 and IPv6 addresses (?)
+* Allowing anonymous connections (without providing a username)
+* A global maximum connection limit of 20 connections.
+
+This configuration was written regarding the needs of this project and it is recommended to launch `mosquitto` using the
+provided `Makefile` so that it uses this configuration file.
+
+### MQTT client
+
+[Eclipse Paho](https://github.com/eclipse-paho/paho.mqtt.python?tab=readme-ov-file) library is used for MQTT
+communications in this program.
+
+`Python 3.11.3` was used during development but any version that is 3.9+ should normally work as well. Currently this program is written to use two threads (Python threads mind you) to handle MQTT communications in one hand and the incoming data from the web server via the POSIX pipe on another thread.
+
+This MQTT client has multiple jobs and is a core component of the whole system working alongside the web server. It's
+jobs are essentially:
+
+* Listen on the MQTT messages to process any incoming "join" requests to assign a unique name (inside the application
+network) to the joining device and create an initial database record for the device (ESP32).
+* Listen on the MQTT messages relating to sensor value readings to record these into the database for the related
+device.
+* Record initial join and last seen timestamps for the devices on the application network.
+* Assign unique session IDs to devices to be able to differentiate between each of their connections and safely discard
+  any out of band data.
+* Listen on any incoming LED control commands from the web server (via the POSIX pipe) and relay the command to the
+related device (after some checks on its presence) to control its LED state.
+
+So this is the main program (and only) that manages and writes to the database in the whole system.
+
+### Python Flask web server
+
+`Python 3.11.3` was used during development but any version that is 3.9+ should normally work as well. The [Flask](https://flask.palletsprojects.com/en/stable/) framework was used in the making.
+
+The web server's roles are simple. Provide the dynamic web pages upon request, filled with data from the database.
+Provide information from the database on a specific device upon request (AJAX GET requests from the web UI). As well as
+relay any LED command that comes in via an AJAX GET request through the web UI to the MQTT client so that it can be
+propagated to the related device via MQTT.
+
+The web server is thus a solely read only client of the database.
+
+The website requires JavaScript to properly function and if not displays a warning message urging you to enable this
+functionality.
+
+For the time being the "Changer d'agencement" (change layout) button on the pages `/capteurs` and `/historique` is not working and this functionality **hasn't been implemented** as it wasn't of high priority. The web UI is also **not fully responsive** and is thus only made for desktop/laptop devices. There was also a planned name change feature to assign familiar names to each device from the web UI via POST requests **which was scrapped** due to time constraints.
+
+The web pages and their features are as follows:
+
+* `/accueil` page
+
+This page is to introduce the project with some photos and quick explanations on what it is for and what it does. Simply
+for decorative purposes.
+
+This page's content **hasn't been implemented** for the time being as it wasn't of high priority.
+
+* `/capteurs` page (extra work, not asked for in the project paper)
+
+This page is quite special in that it started as an experiment on the real time aspects that we could bring into this
+project. After seeing the potential and success in its development, we decided to include it.
+
+This page displays the devices that are *actively* connected to the application network. Meaning only the devices that
+are currently communicating with the MQTT broker (sending regular updates on their sensor readings) are listed here and
+not the ones that were previously active but not momentarily.
+
+This page is designed to be completely real time and dynamic and it has some cool features to go for it. It makes use of a JavaScript MQTT client in the browser called [MQTT.js](https://github.com/mqttjs/MQTT.js/) to get direct access to the updates inside the application network. This allows for the page to automatically display devices when they join and remove them from the UI when they leave (or are disconnected) without refreshing the page.
+
+This is the only page that makes use of an MQTT client on the whole website. It's also worth mentioning that MQTT is
+only listened to in this page and is thus used read only. This page never publishes any messages to any channel, it just
+listens for events to update the page's UI in real time.
+
+This page shows for each connected device the state of its LED, push button and photoresistor in real time. When you push
+the button, the UI updates almost instantly and readings at regular intervals from the photoresistor are displayed as a
+real time chart (the last 10 readings) as new data comes in. The photoresistor values given in percentage indicate the amount of light, thus 100% meaning maximum light and
+0% meaning maximum shadow. The timestamps in this chart are in your browser's local timezone. As for the LED part, it is not only used to display its
+state but also to control it. One can easily turn the LED on or off for a specific active device.
+
+When it comes to how controlling the LED works, the LED checkbox on the web UI is an HTML form with an event listener
+which whenever the checkbox changes state (checked/unchecked), an AJAX GET request is made to a certain endpoint of the
+web server in the background. This request from the browser doesn't expect any response but is used only to relay data to the web server.
+The web server upon reception of this request than transmits it to the MQTT client via a POSIX pipe so that the LED
+command can be relayed to the relative ESP32. This could have been a POST request too but given the simplicity of our
+purpose, we chose a simple GET request instead. This could have also been achieved by bypassing the web server
+completely and directly publishing on the relative MQTT channel to control the ESP32. This wasn't done for two purposes:
+firstly the use of a POSIX pipe was required by the project paper and secondly, this type of shortcut would bypass any
+checks done on the server side. This would also complicate state management more as there would be then an additional
+MQTT publisher acting as a controller other than the server side MQTT client. This would also invalidate the read only
+nature of the MQTT connectivity inside this page that keeps things simple.
+
+Upon reception of a join message, one of two things happen to update the web UI. If the device with the received ID is
+already being displayed, its session ID is updated accordingly to be able to discard out of band messages. Otherwise if
+the device is not already being displayed (either a completely new device or recently disconnected from the network)
+then its details are fetched via an AJAX GET request to a certain endpoint of the web server which responds with HTML
+dynamically generated with the latest details of the requested device from the database. This HTML is dynamically
+inserted into the DOM and is thus displayed without the necessity to refresh the page.
+
+And lastly, and arguably the coolest part. There can be more than one client on the web UI. Yes, multiple people on multiple
+computers can have this page open and control and view the devices simultaneously. As someone activates the LED, the
+state will update on all the other people's browsers and same goes for the push button. And thus technically, people
+could play a game where two or more people could spam the LED control each on their computers to see who wins!
+
+There is also a local filtering functionality (a filter bar) on this page in case there are too many connected devices to only display
+what you are looking for.
+
+* `/historique` page
+
+This is the required part of the project. This page displays the last 10 values recorded to the database for every
+device (ESP32) that ever connected to the application network (thus also the currently inactive ones). 10 values being
+the most recent on top to the oldest for each of LED activation/deactivation events, push button push/release events as
+well as photoresistor readings. If no value has yet been recorded for a device's part, a message indicating this is
+displayed in the relative box. The values are all prefixed with a UTC timestamp taken the moment it was recorded to the
+database. The photoresistor values given in percentage indicate the amount of light, thus 100% meaning maximum light and
+0% meaning maximum shadow.
+
+This page also shows for each displayed device its "last seen" and "joined at" timestamps in UTC timezone.
+
+The devices here are listed from the most recently "last seen" on top to the oldest "last seen".
+
+There is also a local filtering functionality (a filter bar) on this page in case there are too many listed devices to only display
+what you are looking for.
+
+### SQLite database
+
+The database is completely managed from Python via [SQLAlchemy](https://www.sqlalchemy.org/). This includes its
+creation, its settings, the tables and the schemas as well as the insertion and retrieval of any data. There are
+constraint triggers to validate any data to be recorded. The timestamps are kept in UTC timezone. All the data is mapped
+to Python classes. The database isolation level is also set to `SERIALIZABLE` as SQLite doesn't support the actually
+planned isolation level of `READ COMMITTED`. This kind of isolation level is necessary to ensure coherent display of
+values on the web UI when for example there are ongoing join or leave transactions that have to happen atomically.
+
+## MQTT communications specification
 
 This part describes the MQTT communications used to make the whole system come together. **MQTT v5** is considered for
 use in this project.
 
-The keepalive interval has to be **strictly** lower than 6 seconds.
+The keepalive interval has to be **strictly** lower than 12 seconds (initially was 6 but the Raspberry Pi 3 doesn't
+allow for such a small value). It is recommended to **use a 5 second keepalive** inside the ESP32s to keep the responsiveness of the system against unintended disconnects.
 
 ### Channels
 
