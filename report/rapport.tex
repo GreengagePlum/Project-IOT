@@ -60,7 +60,7 @@
 \end{abstract}
 
 \section{Objectifs de notre projet}
-Pour répondre aux demandes décrites dans le \href{https://github.com/GreengagePlum/Project-IOT/blob/v1.0.0/IOC_mode_projet – SESI.pdf}{sujet du projet}, nous avons donc fixé les objectifs suivants : la réalisation d'une interface web sous forme de site web, la mise en place d'un serveur web pour héberger ce site, le développement d'un client \texttt{MQTT} côté serveur pour communiquer avec les \texttt{ESP32}, la configuration d'une base de données sur le serveur, et enfin, la réalisation du code embarqué pour les appareils \texttt{ESP32}.
+Pour répondre aux demandes décrites dans le \href{https://github.com/GreengagePlum/Project-IOT/blob/v1.0.0/IOC_mode_projet%20%E2%80%93%20SESI.pdf}{sujet du projet}, nous avons donc fixé les objectifs suivants : la réalisation d'une interface web sous forme de site web, la mise en place d'un serveur web pour héberger ce site, le développement d'un client \texttt{MQTT} côté serveur pour communiquer avec les \texttt{ESP32}, la configuration d'une base de données sur le serveur, et enfin, la réalisation du code embarqué pour les appareils \texttt{ESP32}.
 
 Notre but premier était double. Premièrement, nous visions à stocker les valeurs lues depuis les capteurs sur le serveur afin de pouvoir les afficher sur l'interface web sous forme d'historique. Deuxièmement, nous souhaitions pouvoir contrôler au minimum la LED d'un \texttt{ESP32} depuis l'interface web, démontrant ainsi une communication bidirectionnelle. Cela nécessitait, au minimum, une page web pour visualiser les données de la base et un élément d'interface (comme une case à cocher) pour manipuler l'état de la LED de chaque appareil connecté.
 
@@ -83,7 +83,7 @@ Les cartes \texttt{ESP32} agissent comme des capteurs et actionneurs connectés.
 
 Un mécanisme d'\textbf{ID de session} a été conçu pour gérer correctement les connexions et déconnexions multiples d'un même \texttt{ESP32}. À chaque nouvelle connexion (après la première), l'\texttt{ESP32} reçoit un nouvel ID de session unique (basé sur le timestamp actuel). Cet ID doit être inclus dans tous les messages publiés par l'\texttt{ESP32}. Le serveur utilise cet ID pour vérifier que les messages reçus proviennent bien de la session active actuelle de l'appareil, écartant ainsi les messages potentiellement hors délai ou provenant d'une session précédente (par exemple, des messages retardés dans le réseau ou publiés juste avant une déconnexion). Cela est crucial pour maintenir la cohérence de l'état, notamment sur l'interface temps réel ("/capteurs").
 
-L'interface web a été pensée autour de deux vues principales : une vue \textbf{historique} classique ("/historique") répondant au besoin fondamental de stockage et consultation des données passées, et une vue \textbf{temps réel} innovante ("/capteurs"). Cette dernière utilise un client \texttt{MQTT} JavaScript directement dans le navigateur de l'utilisateur pour se connecter au broker et recevoir les mises à jour des capteurs en direct, offrant une expérience utilisateur plus dynamique et réactive que ce qui était strictement demandé. Il est important de noter que bien que la page historique n'affiche que les 10 derniers enregistrements pour des raisons de clarté et de performance, la base de données sous-jacente conserve un historique potentiellement illimité des lectures, limité uniquement par l'espace de stockage disponible.
+L'interface web a été pensée autour de deux vues principales : une vue \textbf{historique} classique ("/historique") répondant au besoin fondamental de stockage et consultation des données passées, et une vue \textbf{temps réel} innovante ("/capteurs"). Cette dernière utilise un client \texttt{MQTT} JavaScript directement dans le navigateur de l'utilisateur pour se connecter au broker et recevoir les mises à jour des capteurs en direct, offrant une expérience utilisateur plus dynamique et réactive que ce qui était strictement demandé.
 
 Plusieurs aspects de la conception ont été pensés dans une optique de \textbf{scalabilité} et de \textbf{dynamicité}, même si le sujet initial ne demandait que 1 ou 2 \texttt{ESP32}. Le modèle \textit{pub/sub} de \texttt{MQTT}, l'utilisation d'identifiants numériques uniques pour les \texttt{ESP32} dans les communications et pour l'indexation en base de données, ainsi que le mécanisme d'ID de session et l'usage de LWT, sont des choix qui facilitent l'intégration d'un plus grand nombre d'\texttt{ESP32} et la gestion des appareils qui peuvent rejoindre et quitter le réseau fréquemment (volontairement ou suite à des erreurs). Certaines de ces aspects seront abordés plus tard dans ce rapport.
 
@@ -100,20 +100,20 @@ Côté \textbf{serveur}, l'écosystème \textbf{Python} (v3.11.3) a été privil
     \item L'interaction avec la base de données \textbf{\href{https://www.sqlite.org/index.html}{\texttt{SQLite}}} est assurée par \textbf{\href{https://www.sqlalchemy.org/}{\texttt{SQLAlchemy}}} (v2.0.40), un ORM puissant qui permet de manipuler la base de données en utilisant des objets Python, simplifiant les requêtes et la gestion du schéma. Le niveau d'isolation \texttt{SERIALIZABLE} est configuré pour assurer la cohérence lors d'accès concurrents potentiels (bien que \texttt{SQLite} soit limité en termes de concurrence réelle) à cause de l'indisponibilité de \texttt{READ COMMITTED} qui nous suffisait en réalité. Des déclencheurs SQL sont définis via \texttt{SQLAlchemy} pour renforcer l'intégrité des données (ex: timestamps valides, immutabilité de certaines colonnes).
     \item Le \textbf{broker \texttt{MQTT}} est \textbf{\href{https://mosquitto.org/}{\texttt{Mosquitto}}} (v2.0.21), choisi pour sa conformité aux standards et sa fiabilité. Une configuration personnalisée ("mosquitto.conf") est utilisée pour définir les listeners (port 1883 pour \texttt{MQTT} TCP, port 9001 pour \texttt{MQTT} sur WebSockets afin de permettre la connexion depuis le navigateur), autoriser les connexions anonymes, limiter le nombre de connexions et la taille des paquets, et configurer le logging. Le protocole \textbf{\texttt{MQTT} version 5} est utilisé pour bénéficier de ses fonctionnalités avancées (bien que toutes ne soient pas exploitées ici).
     \item \textbf{Communication Inter-Processus} : Le tube nommé (FIFO) "/tmp/IOC\_ERKEN\_PRANDO" est géré avec les fonctions standard du module \texttt{os} de Python, et la sérialisation des objets (commandes LED) transitant par le tube se fait via le module \texttt{pickle}.
-\end{itemize}
+\end{itemize} \hfill \break
 
 Côté \textbf{\texttt{ESP32}}, le développement s'est fait en \textbf{langage C (variante Arduino)} via l'\textbf{\href{https://www.arduino.cc/}{\texttt{IDE Arduino}}} (v2.3.4).
 \begin{itemize}
     \item La bibliothèque de base pour la carte est \textbf{\href{https://github.com/espressif/arduino-esp32}{\texttt{esp32}}} par Espressif (v2.0.17).
     \item Pour la connectivité \texttt{MQTT}, la bibliothèque \textbf{\href{https://docs.arduino.cc/libraries/adafruit-mqtt-library/}{\texttt{Adafruit MQTT}}} (v2.5.9) a été employée, offrant une interface simple pour interagir avec le broker.
-\end{itemize}
+\end{itemize} \hfill \break
 
 Pour l'\textbf{interface web (frontend)}, les technologies standards HTML, CSS et JavaScript sont utilisées.
 \begin{itemize}
     \item La page temps réel ("/capteurs") intègre la bibliothèque JavaScript \textbf{\href{https://github.com/mqttjs/MQTT.js/}{\texttt{MQTT.js}}} (chargée via CDN \href{https://unpkg.com/}{unpkg}) pour établir une connexion \texttt{MQTT} sur WebSockets directement depuis le navigateur vers le broker \texttt{Mosquitto}.
     \item Pour la visualisation des données de la photorésistance en temps réel, la bibliothèque \textbf{\href{https://www.chartjs.org/}{\texttt{Chart.js}}} (chargée via CDN \href{https://cdnjs.com/}{cdnjs}) est utilisée pour générer et mettre à jour dynamiquement un graphique linéaire.
     \item Les interactions utilisateur (contrôle de la LED, filtrage local) sont gérées via JavaScript standard et l'API \texttt{fetch} pour les requêtes AJAX asynchrones vers le serveur Flask.
-\end{itemize}
+\end{itemize} \hfill \break
 
 La gestion du projet a été facilitée par \textbf{\texttt{Git}} pour le contrôle de version et un \textbf{\texttt{Makefile}} pour automatiser les tâches courantes côté serveur (création de la base de données, lancement du broker, du client \texttt{MQTT} serveur et du serveur web). Les dépendances Python sont gérées via \textbf{\texttt{pip}} et un fichier "requirements.txt".
 
@@ -121,7 +121,7 @@ La gestion du projet a été facilitée par \textbf{\texttt{Git}} pour le contr�
 
 Un protocole applicatif a été défini au-dessus de \texttt{MQTT} v5 pour structurer les échanges. Tous les messages (sauf le tout premier message de join) contiennent un préfixe du format \texttt{<ID\_ESP32>;<ID\_Session>;} pour identifier l'émetteur et sa session de connexion courante. Le séparateur utilisé est le point-virgule (\texttt{;}). Les payloads sont encodés en \textbf{ASCII}.
 
-Cette spécification a été élaborée assez tôt dans le projet pour permettre une répartition claire des tâches et garantir l'interopérabilité, bien qu'elle puisse certainement être améliorée.
+Cette spécification a été élaborée assez tôt dans le projet pour permettre une répartition claire des tâches et garantir l'interopérabilité, bien qu'elle puisse certainement être améliorée. \\
 
 Les \textbf{Qualité de Service (QoS)} \texttt{MQTT} ont été choisi avec soin pour garantir les besoins au sein du
 projet. Voici ce qu'ils signifient :
@@ -129,9 +129,9 @@ projet. Voici ce qu'ils signifient :
     \item \textbf{QoS 0} (At most once): Pour les données fréquentes, non critiques (ex: \texttt{button/status}, \texttt{photoresistor/status}). Faible surcharge, perte possible.
     \item \textbf{QoS 1} (At least once): Pour les commandes et états importants (ex: \texttt{led/command}, \texttt{led/status}). Livraison garantie au moins une fois, doublons possibles.
     \item \textbf{QoS 2} (Exactly once): Pour les messages critiques du cycle de vie (ex: \texttt{state/join}, \texttt{state/leave}, \texttt{state/nameAssign}). Livraison unique garantie, surcharge plus élevée.
-\end{itemize}
+\end{itemize} \hfill \break
 
-\textbf{Last Will and Testament (LWT)} constitue aussi une fonctionnalité nécessaire pour notre projet. Ce mécanisme \texttt{MQTT} où le client demande au broker de publier un message prédéfini (ici, sur \texttt{state/leave} avec QoS 2) si la connexion est interrompue brutalement. Essentiel pour détecter les déconnexions imprévues des ESP32.
+\textbf{Last Will and Testament (LWT)} constitue aussi une fonctionnalité nécessaire pour notre projet. Ce mécanisme \texttt{MQTT} où le client demande au broker de publier un message prédéfini (ici, sur \texttt{state/leave} avec QoS 2) si la connexion est interrompue brutalement. Essentiel pour détecter les déconnexions imprévues des ESP32. \\
 
 \textbf{Canaux et Formats :}
 
@@ -187,9 +187,9 @@ projet. Voici ce qu'ils signifient :
         \texttt{<name>;<session\_id>;<0-100>} (Valeur en pourcentage) \\
         \textit{Ex: \texttt{capteur01;1743946777.603371;58}}
     \end{itemize}
-\end{itemize}
+\end{itemize} \hfill \break
 
-L'identifiant \texttt{ESP32}, bien qu'initialement spécifié comme une chaîne de caractères potentielle (max 30 chars), pour des raisons de performance d'indexation en base de données face à de potentiels accès concurrents fréquents, le serveur assigne en pratique un \textbf{identifiant numérique entier} unique à chaque \texttt{ESP32}. C'est cet ID (transmis comme une chaîne de caractères) qui est utilisé dans les communications \texttt{MQTT}. Un nom "familier" optionnel est stocké séparément en base de données pour l'affichage uniquement dans l'interface web. Donc contrairement aux exemples au dessus, en pratique le "nom" ou l'identifiant d'un ESP32 est en fait un entier sous forme de chaine de caractères.
+L'identifiant \texttt{ESP32}, bien qu'initialement spécifié comme une chaîne de caractères potentielle (max 30 chars), pour des raisons de performance d'indexation en base de données face à de potentiels accès concurrents fréquents, le serveur assigne en pratique un \textbf{identifiant numérique entier} unique à chaque \texttt{ESP32}. C'est cet ID (transmis comme une chaîne de caractères) qui est utilisé dans les communications \texttt{MQTT}. Un nom "familier" optionnel est stocké séparément en base de données pour l'affichage uniquement dans l'interface web. Donc contrairement aux exemples au dessus, en pratique le "nom" ou l'identifiant d'un ESP32 est en fait un entier sous forme de chaine de caractères. \\
 
 \textbf{Protocole d'échange simplifié pour l'\texttt{ESP32} :}
 \begin{enumerate}
@@ -204,7 +204,8 @@ L'identifiant \texttt{ESP32}, bien qu'initialement spécifié comme une chaîne 
     \item Opérations normales : publication des états des capteurs (avec préfixe) et traitement des commandes reçues.
     \item En cas de déconnexion (volontaire ou non), le LWT est (normalement) envoyé par le broker. Une reconnexion redémarre le processus à l'étape 1 (ou 5 si les identifiants sont conservés).
 \end{enumerate}
-Un keepalive court (ex: 5 secondes) est recommandé pour une détection rapide des déconnexions via LWT.
+Un keepalive court (ex: 5 secondes) est recommandé pour une détection rapide des déconnexions via LWT (c'est ce que nous
+avons implémenté).
 
 \section{Difficultés}
 
@@ -231,6 +232,8 @@ L'\textbf{interface utilisateur web} offre deux pages principales :
 \end{itemize}
 De plus, l'interface inclut une structure HTML modulaire et un avertissement en cas de JavaScript désactivé (qu'il
 nécessite pour fonctionner).
+
+Il est important de noter que bien que la page historique n'affiche que les 10 derniers enregistrements pour des raisons de clarté et de performance, la base de données sous-jacente conserve un historique potentiellement illimité des lectures, limité uniquement par l'espace de stockage disponible.
 
 Enfin, le \textbf{code embarqué sur \texttt{ESP32}} (bien que non détaillé ici) est fonctionnel, permettant aux cartes de lire leurs capteurs, contrôler leur LED, se connecter au Wi-Fi et communiquer via \texttt{MQTT} selon le protocole défini.
 
@@ -325,7 +328,7 @@ Les instructions précises pour la compilation et le téléversement sur les car
     \item Modifier le code source pour y inclure les identifiants de votre réseau Wi-Fi (SSID et mot de passe).
     \item Modifier le code source pour y indiquer l'adresse IP de la machine hébergeant le broker \texttt{Mosquitto} sur votre réseau local.
     \item Compiler et téléverser le sketch sur chaque carte \texttt{ESP32} connectée à l'ordinateur via USB.
-\end{enumerate}
+\end{enumerate} \hfill \break
 
 Une fois tous les composants lancés, l'interface web est accessible depuis un navigateur sur le même réseau local, à l'adresse \texttt{http://<IP\_DU\_SERVEUR>:8000} (ou 5000 en mode debug). Les \texttt{ESP32} devraient se connecter au broker \texttt{MQTT}, apparaître sur la page "/capteurs" et commencer à envoyer des données visibles également sur la page "/historique". Si la découverte réseau (mDNS/Avahi/Bonjour) est fonctionnelle, il est souvent possible d'utiliser le nom d'hôte local de votre Raspberry Pi comme par exemple \texttt{http://raspberrypi.local:8000} (nous avons découvert cette astuce pendant le testing de notre projet).
 
