@@ -5,7 +5,7 @@
 \usepackage[french]{babel}
 \usepackage{amsthm,amssymb,amsmath,xcolor}
 \usepackage{setspace}
-\doublespacing
+% \doublespacing
 \usepackage{geometry}
 \geometry{
     a4paper,
@@ -30,16 +30,70 @@
 \begin{document}
 \maketitle
 
+\begin{abstract}
+    Dans le cadre de l'UE Interface des Objets Communiquants (IOC) du parcours de master informatique SESI 2024-25 à la
+    Sorbonne, nous avons été donné à faire ce projet de programmation pour réaliser un réseau de capteurs "IOT" avec une
+    interface web. Plus concrétement, notre but était de créer un système où un ou plusieurs cartes \texttt{ESP32} équippées avec des
+    capteurs comme une photorésistance ainsi que d'autres composants comme une LED et un bouton poussoir communiquent avec
+    un mini serveur logé sur une carte Raspberry Pi 3 pour d'un côté transmettre vers ce serveur les données lues depuis les
+    capteurs à intervalles réguliers afin de les stocker, puis afficher sur une interface web, et d'un autre côté contrôler les cartes \texttt{ESP32} (par
+    exemple leur LED) dans l'autre sens depuis l'interface web. Tout cela en utilisant le Wi-Fi sur ces cartes ainsi que le
+    protocole \texttt{MQTT} pour faire communiquer tous les appareils.
+\end{abstract}
+
+\section{Objectifs de notre projet}
+Pour répondre aux demandes décrites dans le projet, nous avons donc fixé les objectifs suivants :
+\begin{itemize}
+    \item réalisation d'une interface web en tant que site web
+    \item réalisation d'un serveur web pour héberger le site web
+    \item réalisation d'un client \texttt{MQTT} côté serveur pour communiquer avec les \texttt{ESP32}
+    \item configuration d'une base de données sur le serveur
+    \item réalisation du code des appareils \texttt{ESP32}
+\end{itemize} \hfill \break
+
+Notre but premier était donc d'abord deux choses. Premièrement, pouvoir stocker les valeur lues depuis les capteurs sur le serveur pour les afficher sur l'interface web en tant que historique.
+Et deuxièmement, pouvoir contrôler au moins la LED dans le sens inverse depuis l'interface web.
+
+Cela allait nécessiter au minimum une page pour visualiser les données stockées dans la base de données et un contrôle
+(bouton, case à cocher) pour manipuler l'état de la LED de chaque appareil.
+
+Mais avec l'intention de faire plus, le potentiel temps réel du projet nous a attiré l'attention. En plus des demandes du sujet,
+nous avons voulu aussi réaliser une page en plus dans notre site web dédié au temps réel. En effet, notre but était de
+pouvoir afficher les changements d'état des cartes \texttt{ESP32} (tels que le bouton poussoir et la photorésistance)
+instantanément sur l'interface sans même de rafraichir la page sur son navigateur web.
+
+\section{Choix de conception}
+
+bla
+
+\section{Choix d'implémentation}
+
+bla
+
 \section{Difficultés}
+
+bla
+
+\section{Fonctionnalités complétées}
+
+bla
+
+\section{Fonctionnalités incomplètes}
+
+bla
+
+\section{Lacunes et améliorations possibles}
+
+bla
+
+\section{Usage}
+
+bla
+
 \begin{center}
 	\includegraphics[scale=0.2]{placeholder.png}
 \end{center}
-
-\section{Choix d'implémentation}
-Tout d'abord, petit avertissement. J'ai fait le choix d'utiliser
-\href{https://dbeaver.io/}{\texttt{DBeaver}} comme client SQL et environnement
-de dévéloppement pour la première partie du projet. [...] en incluant le charactère
-``\texttt{/}'' aux bons endroits... \\
+\href{https://dbeaver.io/}{\texttt{DBeaver}}
 
 \end{document}
 
