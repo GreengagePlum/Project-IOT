@@ -267,9 +267,7 @@ L'\textbf{interface utilisateur} pourrait être améliorée sur plusieurs points
 
 En termes d'\textbf{organisation du code}, une refactorisation du JavaScript et du CSS pourrait améliorer la maintenabilité. Adopter une \textbf{hiérarchie de topics \texttt{MQTT}} plus structurée (par exemple, "sensors/<sensor\_name>/led/status") pourrait également clarifier les flux de messages à mesure que le système grandit.
 
-L'\textbf{extensibilité} du système est une autre piste : il serait possible d'ajouter le support pour de \textbf{nouveaux types de capteurs ou d'actionneurs} en modifiant le code \texttt{ESP32}, le client \texttt{MQTT} serveur, la base de données et l'interface web. Explorer la \textbf{communication via Bluetooth Low Energy (BLE)}, comme suggéré dans le sujet initial, pourrait offrir une alternative intéressante au Wi-Fi pour certains cas d'usage.
-
-Enfin, des \textbf{campagnes de tests} plus exhaustives sur différentes plateformes (systèmes d'exploitation, navigateurs, versions de Python/libs, configurations réseau) permettraient d'identifier et de corriger des bugs potentiels non découverts lors du développement initial.
+Enfin, explorer la \textbf{communication via Bluetooth Low Energy (BLE)}, comme suggéré dans le sujet initial, pourrait offrir une alternative intéressante au Wi-Fi pour certains cas d'usage.
 
 \section{Usage}
 
@@ -294,12 +292,10 @@ pip install -r requirements.txt
 
     \item \textbf{Mise en Place de la Base de Données} : La base de données \texttt{SQLite} doit être créée avant de lancer le client \texttt{MQTT} ou le serveur web.
         \begin{lstlisting}[language=bash]
-# (Optionnel) Supprimer une base de données existante
+# Supprimer la base de données existante (si jamais)
 make clean
 # Créer le fichier de base de données et les tables
 make db
-# (Optionnel) Insérer des données de test factices
-make data
         \end{lstlisting}
 
     \item \textbf{Lancement des Services} : Ces trois commandes doivent être lancées dans des terminaux séparés (ou gérées via un outil comme \texttt{screen} ou \texttt{tmux}), après avoir activé l'environnement virtuel si vous en utilisez un. \textbf{Lancez le broker en premier.}
@@ -330,6 +326,6 @@ Les instructions précises pour la compilation et le téléversement sur les car
     \item Compiler et téléverser le sketch sur chaque carte \texttt{ESP32} connectée à l'ordinateur via USB.
 \end{enumerate} \hfill \break
 
-Une fois tous les composants lancés, l'interface web est accessible depuis un navigateur sur le même réseau local, à l'adresse \texttt{http://<IP\_DU\_SERVEUR>:8000} (ou 5000 en mode debug). Les \texttt{ESP32} devraient se connecter au broker \texttt{MQTT}, apparaître sur la page "/capteurs" et commencer à envoyer des données visibles également sur la page "/historique". Si la découverte réseau (mDNS/Avahi/Bonjour) est fonctionnelle, il est souvent possible d'utiliser le nom d'hôte local de votre Raspberry Pi comme par exemple \texttt{http://raspberrypi.local:8000} (nous avons découvert cette astuce pendant le testing de notre projet).
+Une fois tous les composants lancés, l'interface web est accessible depuis un navigateur sur le même réseau local, à l'adresse \texttt{http://<IP\_DU\_SERVEUR>:8000} (ou 5000 en mode debug). Les \texttt{ESP32} devraient se connecter au broker \texttt{MQTT}, apparaître sur la page "/capteurs" et commencer à envoyer des données visibles également sur la page "/historique". Si la découverte réseau (mDNS/Avahi/Bonjour) est fonctionnelle, il est souvent possible d'utiliser le nom d'hôte local de votre Raspberry Pi comme par exemple \texttt{http://raspberrypi.local:8000} (nous avons découvert cette astuce très utile pendant le testing de notre projet).
 
 \end{document}
