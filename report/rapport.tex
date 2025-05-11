@@ -106,6 +106,7 @@ Côté \textbf{\texttt{ESP32}}, le développement s'est fait en \textbf{langage 
 \begin{itemize}
     \item La bibliothèque de base pour la carte est \textbf{\href{https://github.com/espressif/arduino-esp32}{\texttt{esp32}}} par Espressif (v2.0.17).
     \item Pour la connectivité \texttt{MQTT}, la bibliothèque \textbf{\href{https://docs.arduino.cc/libraries/adafruit-mqtt-library/}{\texttt{Adafruit MQTT}}} (v2.5.9) a été employée, offrant une interface simple pour interagir avec le broker.
+    \item De plus, la librairie \textbf{\href{https://docs.arduino.cc/libraries/wifi/}{\texttt{WiFi}}} (v1.2.7) a été utilisé afin de connecter les cartes au réseau local sans fil.
 \end{itemize} \hfill \break
 
 Pour l'\textbf{interface web (frontend)}, les technologies standards HTML, CSS et JavaScript sont utilisées.
@@ -235,7 +236,14 @@ nécessite pour fonctionner).
 
 Il est important de noter que bien que la page historique n'affiche que les 10 derniers enregistrements pour des raisons de clarté et de performance, la base de données sous-jacente conserve un historique potentiellement illimité des lectures, limité uniquement par l'espace de stockage disponible.
 
-Enfin, le \textbf{code embarqué sur \texttt{ESP32}} (bien que non détaillé ici) est fonctionnel, permettant aux cartes de lire leurs capteurs, contrôler leur LED, se connecter au Wi-Fi et communiquer via \texttt{MQTT} selon le protocole défini.
+Enfin, le \textbf{code embarqué sur \texttt{ESP32}} est fonctionnel, permettant aux cartes de lire leurs capteurs, contrôler leur LED, se connecter au Wi-Fi et communiquer via \texttt{MQTT} selon le protocole défini.
+\begin{itemize}
+\item Lors de sa connexion, l'ESP32 boucle tant qu'il n'a pas reçu de message du serveur contenant son ID, il continue d'envoyer son adresse MAC de façon régulière.
+\item Il envoie un message de LWT (Last Will Testament) au broker contenant un message informant les autres membres du réseau de sa déconnexion.
+\item Après sa connexion, il garantit de respecter le keepalive, en envoyant le statut de la photorésistance toute les 5 secondes.
+\item Chaque demande d'actionnement (Allumage de LED), renvoie obligatoirement en retour le statut de l'élément, afin de contrôler la bonne exécution de l'instruction
+\item Enfin, pour éviter les rebonds et les faux positifs, le statut du bouton poussoir est contrôlé toute les 100 ms.
+\end{itemize}
 
 \section{Fonctionnalités incomplètes}
 
@@ -249,9 +257,7 @@ Une fonctionnalité permettant aux utilisateurs de \textbf{modifier le nom} d'un
 
 L'\textbf{interface web n'est pas optimisée pour les appareils mobiles} (responsive design). Bien qu'utilisable sur différentes tailles d'écran, l'affichage peut ne pas être idéal sur les petits écrans.
 
-La \textbf{sécurité du broker \texttt{MQTT}} n'a pas été renforcée ; il accepte actuellement les connexions anonymes sans authentification, ce qui est suffisant pour une preuve de concept en réseau local mais nécessiterait une amélioration pour un déploiement plus large.
-
-Enfin, les \textbf{instructions détaillées} pour la compilation et le déploiement du code sur les cartes \texttt{ESP32} ne sont pas encore complètement rédigées dans la documentation (\texttt{README}).
+Enfin, la \textbf{sécurité du broker \texttt{MQTT}} n'a pas été renforcée ; il accepte actuellement les connexions anonymes sans authentification, ce qui est suffisant pour une preuve de concept en réseau local mais nécessiterait une amélioration pour un déploiement plus large.
 
 \section{Lacunes et améliorations possibles}
 
@@ -317,7 +323,7 @@ make debug
 
 \subsection{Composants Côté \texttt{ESP32}}
 
-Les instructions précises pour la compilation et le téléversement sur les cartes \texttt{ESP32} ne sont pas entièrement documentées dans ce rapport. Le processus général implique :
+Les instructions précises pour la compilation et le téléversement sur les cartes \texttt{ESP32} sont disponnible dans le fichier \href{https://github.com/GreengagePlum/Project-IOT/blob/v1.0.0/esp32/README.md}{\texttt{esp32/README.md}}. Le processus général implique :
 \begin{enumerate}
     \item Ouvrir le code source (\textit{sketch}) \texttt{ESP32} dans l'IDE Arduino.
     \item Configurer l'IDE pour la bonne carte \texttt{ESP32} et s'assurer que les bibliothèques requises (framework \texttt{esp32} d'Espressif, bibliothèque \texttt{MQTT} d'Adafruit) sont installées via le gestionnaire de bibliothèques.

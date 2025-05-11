@@ -23,7 +23,7 @@ _En construction..._
 Ce projet de programmation a été réalisé pour l'UE IOC du M1S2 2024/25 Informatique à Sorbonne Université par les deux messieurs suivants.
 
 * Efe ERKEN 21400542
-* Sylvain PRANDO 2xxxxxxx
+* Sylvain PRANDO 21414666
 
 ## Versions des langages
 

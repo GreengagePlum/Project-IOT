@@ -1,0 +1,4 @@
+esp32 v2.0.17
+Adafruit MQTT Library v2.5.9
+Adafruit BusIO v1.17.0
+WiFi v1.2.7
