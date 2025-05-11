@@ -1,11 +1,13 @@
 \RequirePackage[l2tabu, orthodox]{nag}
 \documentclass[12pt]{article}
 \usepackage[T1]{fontenc}
+\usepackage{fontspec}
+% \setmainfont{Latin Modern Roman}
 \usepackage[utf8]{inputenc}
 \usepackage[french]{babel}
 \usepackage{amsthm,amssymb,amsmath,xcolor}
 \usepackage{setspace}
-\doublespacing
+% \doublespacing
 \usepackage{geometry}
 \geometry{
     a4paper,
@@ -21,6 +23,20 @@
     linkcolor=blue,
     filecolor=magenta,
     urlcolor=cyan,
+    pdftitle={Rapport Projet Réseau de capteurs},
+    pdfauthor={Efe ERKEN, Sylvain PRANDO},
+    pdfencoding=auto, % Helps with unicode in bookmarks/metadata
+    unicode=true % Enable unicode support
+}
+\usepackage{listings} % Ajout pour les blocs de code
+% Fix quotes: Use csquotes package
+\usepackage[autostyle=true, style=french]{csquotes} % Recommended for quotes in french
+\MakeOuterQuote{"}
+
+\lstset{ % Configuration globale pour listings
+    basicstyle=\footnotesize\ttfamily,
+    breaklines=true,
+    postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
 }
 
 \author{Efe ERKEN, Sylvain PRANDO}
@@ -30,16 +46,294 @@
 \begin{document}
 \maketitle
 
-\section{Difficultés}
-\begin{center}
-	\includegraphics[scale=0.2]{placeholder.png}
-\end{center}
+\begin{abstract}
+    Dans le cadre de l'UE Interface des Objets Communiquants (IOC) du parcours de master informatique SESI 2024-25 à la
+    Sorbonne, nous avons été donné à faire ce projet de programmation pour réaliser un réseau de capteurs "IOT" avec une
+    interface web.
+    Plus concrètement, notre but était de créer un système où un ou plusieurs cartes \texttt{ESP32} équippées avec des
+    capteurs comme une photorésistance ainsi que d'autres composants comme une LED et un bouton poussoir communiquent avec
+    un mini serveur logé sur une carte Raspberry Pi 3 pour d'un côté transmettre vers ce serveur les données lues depuis les
+    capteurs à intervalles réguliers afin de les stocker, puis afficher sur une interface web, et d'un autre côté contrôler les cartes \texttt{ESP32} (par
+    exemple leur LED) dans l'autre sens depuis l'interface web. Tout cela en utilisant le Wi-Fi sur ces cartes ainsi que le
+    protocole \texttt{MQTT} pour faire communiquer tous les appareils.
+    Le code source complet du projet est disponible sur \href{https://github.com/GreengagePlum/Project-IOT}{GitHub}.
+\end{abstract}
+
+\section{Objectifs de notre projet}
+Pour répondre aux demandes décrites dans le \href{https://github.com/GreengagePlum/Project-IOT/blob/v1.0.0/IOC_mode_projet%20%E2%80%93%20SESI.pdf}{sujet du projet}, nous avons donc fixé les objectifs suivants : la réalisation d'une interface web sous forme de site web, la mise en place d'un serveur web pour héberger ce site, le développement d'un client \texttt{MQTT} côté serveur pour communiquer avec les \texttt{ESP32}, la configuration d'une base de données sur le serveur, et enfin, la réalisation du code embarqué pour les appareils \texttt{ESP32}.
+
+Notre but premier était double. Premièrement, nous visions à stocker les valeurs lues depuis les capteurs sur le serveur afin de pouvoir les afficher sur l'interface web sous forme d'historique. Deuxièmement, nous souhaitions pouvoir contrôler au minimum la LED d'un \texttt{ESP32} depuis l'interface web, démontrant ainsi une communication bidirectionnelle. Cela nécessitait, au minimum, une page web pour visualiser les données de la base et un élément d'interface (comme une case à cocher) pour manipuler l'état de la LED de chaque appareil connecté.
+
+Cependant, animés par l'envie d'aller au-delà des exigences minimales, nous avons été particulièrement attirés par le potentiel temps réel du projet. En complément des fonctionnalités demandées, nous avons décidé de développer une page supplémentaire dédiée à l'affichage et au contrôle en temps réel. L'objectif était de pouvoir visualiser instantanément sur l'interface web les changements d'état des composants des cartes \texttt{ESP32} (comme l'appui sur le bouton poussoir ou les variations de la photorésistance) sans nécessiter de rafraîchissement manuel de la page par l'utilisateur. Cette approche visait à offrir une expérience plus dynamique et interactive, reflétant mieux les capacités des systèmes IoT modernes.
+
+\section{Choix de conception}
+
+L'architecture globale du système s'articule autour du protocole \texttt{MQTT} (Message Queuing Telemetry Transport), choisi pour sa légèreté et son modèle de publication/souscription bien adapté aux environnements IoT où les ressources sont souvent limitées et où une communication asynchrone est souhaitable. Le cœur du système réside sur une carte Raspberry Pi 3, qui centralise les communications et le traitement des données. Pour plus de détails sur l'architecture côté serveur, consulter le fichier \href{https://github.com/GreengagePlum/Project-IOT/blob/v1.0.0/server/README.md}{\texttt{server/README.md}}.
+
+Sur cette Raspberry Pi, plusieurs composants logiciels collaborent :
+\begin{itemize}
+    \item \textbf{Broker MQTT} : Nous avons utilisé \texttt{Mosquitto}, une implémentation populaire et robuste du protocole \texttt{MQTT}. Il agit comme un serveur central recevant les messages publiés par les clients (\texttt{ESP32}, client serveur) et les distribuant aux clients ayant souscrit aux topics correspondants. Sa configuration a été adaptée pour les besoins du projet (ports, logging, connexions anonymes autorisées pour simplifier la preuve de concept).
+    \item \textbf{Client MQTT Serveur} : Un package Python a été développé spécifiquement pour ce projet. Son rôle est multiple : il s'abonne aux topics sur lesquels les \texttt{ESP32} publient leurs données de capteurs (\texttt{led/status}, \texttt{button/status}, \texttt{photoresistor/status}) et enregistre ces informations dans la base de données. Il gère également le processus d'adhésion des \texttt{ESP32} au réseau applicatif en écoutant sur \texttt{state/join} et en publiant des identifiants uniques (nom et ID de session) sur \texttt{state/nameAssign}. Enfin, il reçoit les commandes (ex: allumer/éteindre LED) depuis le serveur web via un tube nommé et les publie sur le topic \texttt{led/command} à destination de l'\texttt{ESP32} concerné. Ce client est donc le seul composant faisant des accès en écriture à la base de données.
+    \item \textbf{Serveur Web HTTP} : Basé sur le micro-framework \texttt{Flask} en Python, il fournit l'interface utilisateur web. Il sert les pages HTML (générées dynamiquement avec \texttt{Jinja2}) aux navigateurs des utilisateurs. Il interroge la base de données (en lecture seule) pour afficher l'historique des données ("/historique") ou l'état initial des capteurs actifs ("/capteurs"). Il reçoit également les requêtes AJAX (pour contrôler la LED ou obtenir les détails d'un capteur) et les transmet au client \texttt{MQTT} serveur via le tube nommé.
+    \item \textbf{Base de données} : Une base de données \texttt{SQLite} a été choisie pour sa simplicité (stockage dans un unique fichier) et sa bonne intégration avec Python via l'ORM \texttt{SQLAlchemy}. Elle stocke l'historique des lectures de chaque capteur (LED, bouton, photorésistance) avec leur timestamp UTC, ainsi que les métadonnées de chaque \texttt{ESP32} (ID, nom assigné, adresse MAC, statut de connexion, date de première connexion, date de dernière vue, ID de session actuel).
+    \item \textbf{Tube Nommé (FIFO)} : Conformément aux exigences du sujet, un tube nommé POSIX ("/tmp/IOC\_ERKEN\_PRANDO") est utilisé comme mécanisme de communication inter-processus (IPC) unidirectionnel entre le serveur web (écrivain) et le client \texttt{MQTT} serveur (lecteur). Il sert spécifiquement à transmettre les commandes initiées depuis l'interface web (ex: changement d'état de la LED) vers le client \texttt{MQTT} qui se chargera de les publier via \texttt{MQTT}.
+\end{itemize}
+
+Les cartes \texttt{ESP32} agissent comme des capteurs et actionneurs connectés. Elles exécutent un code Arduino C qui gère la connexion Wi-Fi, la lecture des capteurs (photorésistance, bouton), le contrôle de l'actionneur (LED), et la communication \texttt{MQTT} avec le broker sur la Raspberry Pi. Chaque \texttt{ESP32} implémente un client \texttt{MQTT} pour publier ses données et souscrire aux commandes le concernant.
+
+Un mécanisme d'\textbf{ID de session} a été conçu pour gérer correctement les connexions et déconnexions multiples d'un même \texttt{ESP32}. À chaque nouvelle connexion (après la première), l'\texttt{ESP32} reçoit un nouvel ID de session unique (basé sur le timestamp actuel). Cet ID doit être inclus dans tous les messages publiés par l'\texttt{ESP32}. Le serveur utilise cet ID pour vérifier que les messages reçus proviennent bien de la session active actuelle de l'appareil, écartant ainsi les messages potentiellement hors délai ou provenant d'une session précédente (par exemple, des messages retardés dans le réseau ou publiés juste avant une déconnexion). Cela est crucial pour maintenir la cohérence de l'état, notamment sur l'interface temps réel ("/capteurs").
+
+L'interface web a été pensée autour de deux vues principales : une vue \textbf{historique} classique ("/historique") répondant au besoin fondamental de stockage et consultation des données passées, et une vue \textbf{temps réel} innovante ("/capteurs"). Cette dernière utilise un client \texttt{MQTT} JavaScript directement dans le navigateur de l'utilisateur pour se connecter au broker et recevoir les mises à jour des capteurs en direct, offrant une expérience utilisateur plus dynamique et réactive que ce qui était strictement demandé.
+
+Plusieurs aspects de la conception ont été pensés dans une optique de \textbf{scalabilité} et de \textbf{dynamicité}, même si le sujet initial ne demandait que 1 ou 2 \texttt{ESP32}. Le modèle \textit{pub/sub} de \texttt{MQTT}, l'utilisation d'identifiants numériques uniques pour les \texttt{ESP32} dans les communications et pour l'indexation en base de données, ainsi que le mécanisme d'ID de session et l'usage de LWT, sont des choix qui facilitent l'intégration d'un plus grand nombre d'\texttt{ESP32} et la gestion des appareils qui peuvent rejoindre et quitter le réseau fréquemment (volontairement ou suite à des erreurs). Certaines de ces aspects seront abordés plus tard dans ce rapport.
+
+Enfin, des \textbf{hypothèses de conception} ont été posées pour cadrer le développement : la permanence et la disponibilité constante des composants serveur (broker, client \texttt{MQTT}, serveur web) sont supposées. On suppose également que les \texttt{ESP32} se connectent après le démarrage complet du serveur. La robustesse face aux pannes n'était pas l'objectif premier, bien que l'utilisation de messages LWT (Last Will and Testament) \texttt{MQTT} soit prévue pour détecter les déconnexions inattendues des \texttt{ESP32} et mettre à jour leur statut dans la base de données via le topic \texttt{state/leave}.
 
 \section{Choix d'implémentation}
-Tout d'abord, petit avertissement. J'ai fait le choix d'utiliser
-\href{https://dbeaver.io/}{\texttt{DBeaver}} comme client SQL et environnement
-de dévéloppement pour la première partie du projet. [...] en incluant le charactère
-``\texttt{/}'' aux bons endroits... \\
+
+Pour concrétiser la conception décrite précédemment, des choix technologiques spécifiques ont été faits.
+
+Côté \textbf{serveur}, l'écosystème \textbf{Python} (v3.11.3) a été privilégié pour sa rapidité de développement et la richesse de ses bibliothèques.
+\begin{itemize}
+    \item Pour le \textbf{serveur web}, \textbf{\href{https://flask.palletsprojects.com/}{\texttt{Flask}}} (v3.1.0) a été sélectionné comme micro-framework pour sa légèreté et sa flexibilité, adapté à la taille du projet. \textbf{\href{https://jinja.palletsprojects.com/}{\texttt{Jinja2}}} est utilisé pour le templating HTML. Pour le déploiement en production, \textbf{\href{https://gunicorn.org/}{\texttt{Gunicorn}}} (v23.0.0) est utilisé comme serveur WSGI, plus robuste que le serveur de développement Flask intégré.
+    \item La communication \textbf{\texttt{MQTT}} côté serveur est gérée par la bibliothèque \textbf{\href{https://github.com/eclipse/paho.mqtt.python}{\texttt{paho-mqtt}}} (v2.1.0), client Python standard pour \texttt{MQTT}.
+    \item L'interaction avec la base de données \textbf{\href{https://www.sqlite.org/index.html}{\texttt{SQLite}}} est assurée par \textbf{\href{https://www.sqlalchemy.org/}{\texttt{SQLAlchemy}}} (v2.0.40), un ORM puissant qui permet de manipuler la base de données en utilisant des objets Python, simplifiant les requêtes et la gestion du schéma. Le niveau d'isolation \texttt{SERIALIZABLE} est configuré pour assurer la cohérence lors d'accès concurrents potentiels (bien que \texttt{SQLite} soit limité en termes de concurrence réelle) à cause de l'indisponibilité de \texttt{READ COMMITTED} qui nous suffisait en réalité. Des déclencheurs SQL sont définis via \texttt{SQLAlchemy} pour renforcer l'intégrité des données (ex: timestamps valides, immutabilité de certaines colonnes).
+    \item Le \textbf{broker \texttt{MQTT}} est \textbf{\href{https://mosquitto.org/}{\texttt{Mosquitto}}} (v2.0.21), choisi pour sa conformité aux standards et sa fiabilité. Une configuration personnalisée ("mosquitto.conf") est utilisée pour définir les listeners (port 1883 pour \texttt{MQTT} TCP, port 9001 pour \texttt{MQTT} sur WebSockets afin de permettre la connexion depuis le navigateur), autoriser les connexions anonymes, limiter le nombre de connexions et la taille des paquets, et configurer le logging. Le protocole \textbf{\texttt{MQTT} version 5} est utilisé pour bénéficier de ses fonctionnalités avancées (bien que toutes ne soient pas exploitées ici).
+    \item \textbf{Communication Inter-Processus} : Le tube nommé (FIFO) "/tmp/IOC\_ERKEN\_PRANDO" est géré avec les fonctions standard du module \texttt{os} de Python, et la sérialisation des objets (commandes LED) transitant par le tube se fait via le module \texttt{pickle}.
+\end{itemize} \hfill \break
+
+Côté \textbf{\texttt{ESP32}}, le développement s'est fait en \textbf{langage C (variante Arduino)} via l'\textbf{\href{https://www.arduino.cc/}{\texttt{IDE Arduino}}} (v2.3.4).
+\begin{itemize}
+    \item La bibliothèque de base pour la carte est \textbf{\href{https://github.com/espressif/arduino-esp32}{\texttt{esp32}}} par Espressif (v2.0.17).
+    \item Pour la connectivité \texttt{MQTT}, la bibliothèque \textbf{\href{https://docs.arduino.cc/libraries/adafruit-mqtt-library/}{\texttt{Adafruit MQTT}}} (v2.5.9) a été employée, offrant une interface simple pour interagir avec le broker.
+\item De plus, la librairie \textbf{\href{https://docs.arduino.cc/libraries/wifi/}{\texttt{WiFi}}} (v1.2.7) a été utilisé afin de connecter les cartes au réseau local sans fil.
+\end{itemize} \hfill \break
+
+
+Pour l'\textbf{interface web (frontend)}, les technologies standards HTML, CSS et JavaScript sont utilisées.
+\begin{itemize}
+    \item La page temps réel ("/capteurs") intègre la bibliothèque JavaScript \textbf{\href{https://github.com/mqttjs/MQTT.js/}{\texttt{MQTT.js}}} (chargée via CDN \href{https://unpkg.com/}{unpkg}) pour établir une connexion \texttt{MQTT} sur WebSockets directement depuis le navigateur vers le broker \texttt{Mosquitto}.
+    \item Pour la visualisation des données de la photorésistance en temps réel, la bibliothèque \textbf{\href{https://www.chartjs.org/}{\texttt{Chart.js}}} (chargée via CDN \href{https://cdnjs.com/}{cdnjs}) est utilisée pour générer et mettre à jour dynamiquement un graphique linéaire.
+    \item Les interactions utilisateur (contrôle de la LED, filtrage local) sont gérées via JavaScript standard et l'API \texttt{fetch} pour les requêtes AJAX asynchrones vers le serveur Flask.
+\end{itemize} \hfill \break
+
+La gestion du projet a été facilitée par \textbf{\texttt{Git}} pour le contrôle de version et un \textbf{\texttt{Makefile}} pour automatiser les tâches courantes côté serveur (création de la base de données, lancement du broker, du client \texttt{MQTT} serveur et du serveur web). Les dépendances Python sont gérées via \textbf{\texttt{pip}} et un fichier "requirements.txt".
+
+\subsection{Spécification des communications \texttt{MQTT}}
+
+Un protocole applicatif a été défini au-dessus de \texttt{MQTT} v5 pour structurer les échanges. Tous les messages (sauf le tout premier message de join) contiennent un préfixe du format \texttt{<ID\_ESP32>;<ID\_Session>;} pour identifier l'émetteur et sa session de connexion courante. Le séparateur utilisé est le point-virgule (\texttt{;}). Les payloads sont encodés en \textbf{ASCII}.
+
+Cette spécification a été élaborée assez tôt dans le projet pour permettre une répartition claire des tâches et garantir l'interopérabilité, bien qu'elle puisse certainement être améliorée. \\
+
+Les \textbf{Qualité de Service (QoS)} \texttt{MQTT} ont été choisi avec soin pour garantir les besoins au sein du
+projet. Voici ce qu'ils signifient :
+\begin{itemize}
+    \item \textbf{QoS 0} (At most once): Pour les données fréquentes, non critiques (ex: \texttt{button/status}, \texttt{photoresistor/status}). Faible surcharge, perte possible.
+    \item \textbf{QoS 1} (At least once): Pour les commandes et états importants (ex: \texttt{led/command}, \texttt{led/status}). Livraison garantie au moins une fois, doublons possibles.
+    \item \textbf{QoS 2} (Exactly once): Pour les messages critiques du cycle de vie (ex: \texttt{state/join}, \texttt{state/leave}, \texttt{state/nameAssign}). Livraison unique garantie, surcharge plus élevée.
+\end{itemize} \hfill \break
+
+\textbf{Last Will and Testament (LWT)} constitue aussi une fonctionnalité nécessaire pour notre projet. Ce mécanisme \texttt{MQTT} où le client demande au broker de publier un message prédéfini (ici, sur \texttt{state/leave} avec QoS 2) si la connexion est interrompue brutalement. Essentiel pour détecter les déconnexions imprévues des ESP32. \\
+
+\textbf{Canaux et Formats :}
+
+\begin{itemize}
+    \item \texttt{state/join} (QoS 2) : Utilisé par l'\texttt{ESP32} pour rejoindre le réseau.
+    \begin{itemize}
+        \item Format 1 (Premier join / Nouvelle session) : \\
+        \texttt{<@MAC>} \\
+        \textit{Ex: \texttt{61:EC:ED:3B:25:B1}} (17 caractères)
+        \item Format 2 (Confirmation de session après LWT) : \\
+        \texttt{<name>;<session\_id>} \\
+        \textit{Ex: \texttt{capteur02;1743946777.603371}} (Nom: max 30 chars, Session ID: 17 chars + null)
+    \end{itemize}
+
+    \item \texttt{state/nameAssign} (QoS 2) : Utilisé par le serveur pour assigner un nom et un ID de session.
+    \begin{itemize}
+        \item Format : \\
+        \texttt{<@MAC>;<name>;<session\_id>} \\
+        \textit{Ex: \texttt{61:EC:ED:3B:25:B1;capteur01;1743946777.603371}}
+    \end{itemize}
+
+    \item \texttt{state/leave} (QoS 2) : Utilisé par l'\texttt{ESP32} (via LWT ou manuellement) pour notifier sa déconnexion.
+    \begin{itemize}
+        \item Format : \\
+        \texttt{<name>;<session\_id>} \\
+        \textit{Ex: \texttt{capteur01;1743946777.603371}}
+    \end{itemize}
+
+    \item \texttt{led/command} (QoS 1) : Utilisé par le serveur pour envoyer une commande LED.
+    \begin{itemize}
+        \item Format : \\
+        \texttt{<name>;<session\_id>;<1|0>} (1 pour ON, 0 pour OFF) \\
+        \textit{Ex: \texttt{capteur01;1743946777.603371;1}}
+    \end{itemize}
+
+    \item \texttt{led/status} (QoS 1) : Utilisé par l'\texttt{ESP32} pour rapporter l'état de la LED.
+    \begin{itemize}
+        \item Format : \\
+        \texttt{<name>;<session\_id>;<1|0>} (1 pour ON, 0 pour OFF) \\
+        \textit{Ex: \texttt{capteur02;1743946777.603371;0}}
+    \end{itemize}
+
+    \item \texttt{button/status} (QoS 0) : Utilisé par l'\texttt{ESP32} pour rapporter l'état du bouton.
+    \begin{itemize}
+        \item Format : \\
+        \texttt{<name>;<session\_id>;<1|0>} (1 pour APPUYÉ, 0 pour RELÂCHÉ) \\
+        \textit{Ex: \texttt{optimus;1743946777.603371;1}}
+    \end{itemize}
+
+    \item \texttt{photoresistor/status} (QoS 0) : Utilisé par l'\texttt{ESP32} pour envoyer les lectures de la photorésistance.
+    \begin{itemize}
+        \item Format : \\
+        \texttt{<name>;<session\_id>;<0-100>} (Valeur en pourcentage) \\
+        \textit{Ex: \texttt{capteur01;1743946777.603371;58}}
+    \end{itemize}
+\end{itemize} \hfill \break
+
+L'identifiant \texttt{ESP32}, bien qu'initialement spécifié comme une chaîne de caractères potentielle (max 30 chars), pour des raisons de performance d'indexation en base de données face à de potentiels accès concurrents fréquents, le serveur assigne en pratique un \textbf{identifiant numérique entier} unique à chaque \texttt{ESP32}. C'est cet ID (transmis comme une chaîne de caractères) qui est utilisé dans les communications \texttt{MQTT}. Un nom "familier" optionnel est stocké séparément en base de données pour l'affichage uniquement dans l'interface web. Donc contrairement aux exemples au dessus, en pratique le "nom" ou l'identifiant d'un ESP32 est en fait un entier sous forme de chaine de caractères. \\
+
+\textbf{Protocole d'échange simplifié pour l'\texttt{ESP32} :}
+\begin{enumerate}
+    \item Connexion initiale au broker \texttt{MQTT}.
+    \item Souscription à \texttt{state/nameAssign}.
+    \item Publication de l'adresse MAC sur \texttt{state/join}.
+    \item Réception et stockage du \texttt{<name>} et \texttt{<session\_id>} depuis \texttt{state/nameAssign}.
+    \item Déconnexion.
+    \item Reconnexion au broker en configurant le message LWT : topic \texttt{state/leave}, payload \texttt{<name>;<session\_id>}, QoS 2, retain=false.
+    \item Souscription aux topics nécessaires (ex: \texttt{led/command}).
+    \item Publication de \texttt{<name>;<session\_id>} sur \texttt{state/join} pour activer la session.
+    \item Opérations normales : publication des états des capteurs (avec préfixe) et traitement des commandes reçues.
+    \item En cas de déconnexion (volontaire ou non), le LWT est (normalement) envoyé par le broker. Une reconnexion redémarre le processus à l'étape 1 (ou 5 si les identifiants sont conservés).
+\end{enumerate}
+Un keepalive court (ex: 5 secondes) est recommandé pour une détection rapide des déconnexions via LWT (c'est ce que nous
+avons implémenté).
+
+\section{Difficultés}
+
+Durant la réalisation, nous avons principalement fait face à deux types de difficultés inhérentes à la nature du projet :
+
+La première concerne la \textbf{robustesse globale du système distribué}. Notre conception actuelle repose sur des hypothèses simplificatrices, notamment la disponibilité constante des composants serveur (broker \texttt{MQTT}, client \texttt{MQTT} Python, serveur web Flask). Dans un scénario réel, des pannes réseau ou des arrêts inopinés de ces composants peuvent survenir. Gérer ces cas de figure (par exemple, avec des mécanismes de reconnexion automatique côté \texttt{ESP32}, des files d'attente persistantes côté broker, ou une supervision des processus serveur) ajouterait une complexité significative que nous avons choisi de ne pas aborder dans le cadre de ce projet initial, afin de nous concentrer sur la preuve de concept fonctionnelle.
+
+La seconde difficulté réside dans la \textbf{gestion de la complexité de l'état} dans un système avec potentiellement plusieurs utilisateurs interagissant en temps réel. Assurer que l'état affiché sur l'interface web (notamment la page "/capteurs") reflète fidèlement et de manière cohérente l'état réel des \texttt{ESP32}, même lorsque plusieurs utilisateurs envoient des commandes (comme allumer/éteindre une LED) quasi simultanément, est un défi. Notre approche actuelle, utilisant \texttt{MQTT} pour diffuser les changements d'état (\texttt{led/status}) et un ID de session pour écarter les messages obsolètes, fonctionne pour notre cas d'usage mais pourrait nécessiter des mécanismes plus sophistiqués (comme des accusés de réception applicatifs ou des transactions) dans des systèmes plus critiques ou à plus grande échelle.
+
+\section{Fonctionnalités complétées}
+
+Le projet, dans sa version actuelle (v1.0.0), intègre un ensemble conséquent de fonctionnalités permettant de réaliser les objectifs principaux attendus par le sujet du projet et d'aller au-delà :
+
+Le cœur du système, la \textbf{communication via \texttt{MQTT} v5}, est pleinement opérationnel. Un protocole applicatif détaillé a été spécifié et implémenté, définissant les canaux, les formats de message (incluant nom du capteur et ID de session) et les niveaux de QoS pour les différents types d'échanges (join/leave, assignation de nom, états et commandes LED, état bouton, lectures photorésistance). Le broker \texttt{Mosquitto} est configuré, et le client \texttt{MQTT} Python côté serveur gère l'enregistrement des données, l'assignation des identifiants et le relais des commandes via un tube nommé POSIX, comme demandé.
+
+La \textbf{persistance des données} est assurée par une base de données \texttt{SQLite}, dont le schéma est géré via l'ORM \texttt{SQLAlchemy}. Elle stocke les informations des capteurs ainsi que l'historique de leurs lectures (LED, bouton, photorésistance) avec des timestamps UTC. Des déclencheurs SQL veillent à l'intégrité des données.
+
+Le \textbf{serveur web \texttt{Flask}} remplit son rôle en servant les pages web dynamiques via \texttt{Jinja2}. Il répond correctement aux requêtes AJAX initiées par l'interface, que ce soit pour obtenir des informations sur un capteur spécifique (utilisé lors de l'ajout dynamique sur la page temps réel) ou pour transmettre une commande de LED au client \texttt{MQTT} serveur.
+
+L'\textbf{interface utilisateur web} offre deux pages principales :
+\begin{itemize}
+    \item La page \textbf{Historique ("/historique")} affiche, comme requis, les 10 dernières valeurs enregistrées pour chaque capteur (actifs ou inactifs) ayant rejoint le réseau, avec les timestamps correspondants. Une barre de filtrage permet de rechercher un capteur par nom.
+    \item La page \textbf{Capteurs ("/capteurs")}, un ajout au-delà du sujet initial, fournit une vue \textbf{temps réel} des capteurs \textit{activement} connectés. Grâce à un client \texttt{MQTT} JavaScript (\texttt{MQTT.js}) intégré, elle se met à jour dynamiquement : les capteurs apparaissent lorsqu'ils rejoignent le réseau et disparaissent lorsqu'ils le quittent (ou sont déconnectés via LWT), sans nécessiter de recharger la page. L'état du bouton et de la LED est reflété quasi instantanément, et les lectures de la photorésistance sont visualisées sur un graphique \texttt{Chart.js} qui s'actualise à mesure que les données arrivent. Le contrôle de la LED est également possible depuis cette page. Cette interface supporte plusieurs utilisateurs simultanés, chacun voyant les mêmes mises à jour d'état. Une barre de filtrage est aussi présente ici.
+\end{itemize}
+De plus, l'interface inclut une structure HTML modulaire et un avertissement en cas de JavaScript désactivé (qu'il
+nécessite pour fonctionner).
+
+Il est important de noter que bien que la page historique n'affiche que les 10 derniers enregistrements pour des raisons de clarté et de performance, la base de données sous-jacente conserve un historique potentiellement illimité des lectures, limité uniquement par l'espace de stockage disponible.
+
+Enfin, le \textbf{code embarqué sur \texttt{ESP32}} est fonctionnel, permettant aux cartes de lire leurs capteurs, contrôler leur LED, se connecter au Wi-Fi et communiquer via \texttt{MQTT} selon le protocole défini.
+\begin{itemize}
+\item Lors de sa connexion, l'ESP32 boucle tant qu'il n'a pas reçu de message du serveur contenant son ID, il continue d'envoyer son adresse MAC de façon régulière.
+\item Il envoie un message de LWT (Last Will Testament) au broker contenant un message informant les autres membres du réseau de sa déconnexion.
+\item Après sa connexion, il garantit de respecter le keepalive, en envoyant le statut de la photorésistance toute les 5 secondes.
+\item Chaque demande d'actionnement (Allumage de LED), renvoie obligatoirement en retour le statut de l'élément, afin de contrôler la bonne exécution de l'instruction
+\item Enfin, pour éviter les rebonds et les faux positifs, le statut du bouton poussoir est contrôlé toute les 100 ms.
+\end{itemize}
+
+\section{Fonctionnalités incomplètes}
+
+Certaines fonctionnalités envisagées ou de moindre priorité n'ont pas pu être finalisées dans la version actuelle :
+
+Bien que la structure de la \textbf{page d'accueil ("/accueil")} existe, son contenu spécifique (texte de présentation, images du montage physique) n'a pas été rédigé ; elle affiche simplement un message "En construction...".
+
+Sur les pages "/capteurs" et "/historique", un \textbf{bouton "Changer d'agencement"} est présent dans l'interface, mais la logique associée permettant de modifier la disposition des éléments affichés (par exemple, passer d'une grille à une liste) n'a pas été implémentée.
+
+Une fonctionnalité permettant aux utilisateurs de \textbf{modifier le nom} d'un capteur via l'interface web avait été initialement prévue pour une meilleure identification des appareils. Cependant, cette fonctionnalité a été écartée ("scrapped") au cours du développement, principalement par manque de temps. Les capteurs sont donc identifiés par leur ID numérique auto-incrémenté X qui s'affiche sur l'interface web comme "Capteur\#X" assigné lors du premier join.
+
+L'\textbf{interface web n'est pas optimisée pour les appareils mobiles} (responsive design). Bien qu'utilisable sur différentes tailles d'écran, l'affichage peut ne pas être idéal sur les petits écrans.
+
+Enfin, la \textbf{sécurité du broker \texttt{MQTT}} n'a pas été renforcée ; il accepte actuellement les connexions anonymes sans authentification, ce qui est suffisant pour une preuve de concept en réseau local mais nécessiterait une amélioration pour un déploiement plus large.
+
+
+\section{Lacunes et améliorations possibles}
+
+Au-delà des fonctionnalités non complétées, plusieurs aspects du projet pourraient être améliorés ou étendus à l'avenir :
+
+Une amélioration majeure concernerait la \textbf{robustesse} générale face aux erreurs et aux pannes. Cela pourrait inclure une meilleure gestion des erreurs réseau côté \texttt{ESP32} et serveur, des mécanismes de reconnexion plus résilients, et éventuellement une supervision des processus serveur pour les redémarrer automatiquement en cas de crash. Rendre le client \texttt{MQTT} JavaScript de la page temps réel plus résistant aux "data races" lors du chargement initial et aux déconnexions intempestives serait également bénéfique. Par exemple, la page "/capteurs" peut présenter une brève incohérence d'état juste après le chargement initial si un \texttt{ESP32} se connecte/déconnecte pendant que le client \texttt{MQTT.js} s'initialise (ceci constitue une sorte de section critique).
+
+La \textbf{sécurité} est un axe d'amélioration critique. Implémenter l'authentification (par exemple, nom d'utilisateur/mot de passe) et le chiffrement (TLS/SSL) pour les connexions \texttt{MQTT} est essentiel pour protéger les communications, en particulier si le système devait être exposé en dehors d'un réseau local sécurisé. De plus, la dépendance à l'adresse MAC comme identifiant unique initial pourrait être revue pour éviter les problèmes potentiels de collision ou de spoofing, bien que cela complexifierait le processus d'enregistrement initial.
+
+Le \textbf{déploiement et la configuration} pourraient être grandement simplifiés par l'utilisation de \textbf{\href{https://www.docker.com/}{Docker}}. Conteneuriser le broker \texttt{Mosquitto}, le client \texttt{MQTT} Python, le serveur web Flask rendrait l'installation et la mise à jour beaucoup plus aisées. Coupler cela à un pipeline d'\textbf{Intégration Continue/Déploiement Continu (CI/CD)} automatiserait les tests et les déploiements.
+
+L'\textbf{interface utilisateur} pourrait être améliorée sur plusieurs points : la rendre entièrement \textbf{responsive} pour une utilisation optimale sur mobile, implémenter les fonctionnalités manquantes (changement de layout, édition des noms), ajouter un \textbf{indicateur visuel de l'état de la connexion \texttt{MQTT}} dans le navigateur, et proposer une \textbf{internationalisation} (FR/EN). Des améliorations sur les graphiques \texttt{Chart.js} (échelle de temps, animations) sont aussi envisageables.
+
+En termes d'\textbf{organisation du code}, une refactorisation du JavaScript et du CSS pourrait améliorer la maintenabilité. Adopter une \textbf{hiérarchie de topics \texttt{MQTT}} plus structurée (par exemple, "sensors/<sensor\_name>/led/status") pourrait également clarifier les flux de messages à mesure que le système grandit.
+
+Enfin, explorer la \textbf{communication via Bluetooth Low Energy (BLE)}, comme suggéré dans le sujet initial, pourrait offrir une alternative intéressante au Wi-Fi pour certains cas d'usage.
+
+\section{Usage}
+
+Pour utiliser et lancer le projet, il faut suivre des étapes distinctes pour les composants côté serveur et côté \texttt{ESP32}. Le code source complet et les fichiers de configuration sont disponibles sur le \href{https://github.com/GreengagePlum/Project-IOT}{dépôt GitHub} du projet.
+
+\subsection{Composants Côté Serveur (sur Raspberry Pi ou machine Linux)}
+
+Les instructions détaillées sont disponibles dans le fichier \href{https://github.com/GreengagePlum/Project-IOT/blob/v1.0.0/server/README.md}{\texttt{server/README.md}}. Voici un résumé des étapes clés, à effectuer dans le répertoire \texttt{server/} du projet :
+
+\begin{enumerate}
+    \item \textbf{Prérequis} : Assurez-vous d'avoir Python 3.9+ installé, ainsi que les outils \texttt{sqlite3} et \texttt{mosquitto}. Vérifiez qu'aucun autre service n'utilise les ports 1883 (MQTT TCP) et 9001 (MQTT WebSockets), et que votre pare-feu autorise les connexions entrantes sur ces ports depuis votre réseau local (pour les \texttt{ESP32} et les navigateurs web).
+
+    \item \textbf{Installation des Dépendances Python} : Il est fortement recommandé d'utiliser un environnement virtuel.
+        \begin{lstlisting}[language=bash]
+# Créer un environnement virtuel (optionnel)
+python -m venv .venv
+# Activer l'environnement virtuel (Linux/macOS)
+. .venv/bin/activate
+# Installer les dépendances depuis requirements.txt
+pip install -r requirements.txt
+        \end{lstlisting}
+
+    \item \textbf{Mise en Place de la Base de Données} : La base de données \texttt{SQLite} doit être créée avant de lancer le client \texttt{MQTT} ou le serveur web.
+        \begin{lstlisting}[language=bash]
+# Supprimer la base de données existante (si jamais)
+make clean
+# Créer le fichier de base de données et les tables
+make db
+        \end{lstlisting}
+
+    \item \textbf{Lancement des Services} : Ces trois commandes doivent être lancées dans des terminaux séparés (ou gérées via un outil comme \texttt{screen} ou \texttt{tmux}), après avoir activé l'environnement virtuel si vous en utilisez un. \textbf{Lancez le broker en premier.}
+        \begin{lstlisting}[language=bash]
+# 1. Lancer le broker MQTT Mosquitto avec la config du projet
+make broker
+
+# 2. Lancer le client MQTT Python côté serveur
+make client
+
+# 3. Lancer le serveur web Flask
+#    Option A: Serveur de production (Gunicorn, port 8000)
+make prod
+#    Option B: Serveur de développement (Flask intégré, port 5000)
+make debug
+        \end{lstlisting}
+        \textit{Note importante :} Le client \texttt{MQTT} serveur (\texttt{make client}) et le serveur web (\texttt{make prod/debug}) dépendent l'un de l'autre pour l'ouverture du tube nommé (FIFO). Ils peuvent sembler bloqués au démarrage jusqu'à ce que l'autre processus soit également lancé et ouvre l'autre extrémité du tube. Le broker \texttt{MQTT}, lui, est indépendant.
+\end{enumerate}
+
+\subsection{Composants Côté \texttt{ESP32}}
+
+Les instructions précises pour la compilation et le téléversement sur les cartes \texttt{ESP32} sont disponnible dans le fichier \href{https://github.com/GreengagePlum/Project-IOT/blob/v1.0.0/esp32/README.md}{\texttt{esp32/README.md}}. Le processus général implique :
+\begin{enumerate}
+    \item Ouvrir le code source (\textit{sketch}) \texttt{ESP32} dans l'IDE Arduino.
+    \item Configurer l'IDE pour la bonne carte \texttt{ESP32} et s'assurer que les bibliothèques requises (framework \texttt{esp32} d'Espressif, bibliothèque \texttt{MQTT} d'Adafruit) sont installées via le gestionnaire de bibliothèques.
+    \item Modifier le code source pour y inclure les identifiants de votre réseau Wi-Fi (SSID et mot de passe).
+    \item Modifier le code source pour y indiquer l'adresse IP de la machine hébergeant le broker \texttt{Mosquitto} sur votre réseau local.
+    \item Compiler et téléverser le sketch sur chaque carte \texttt{ESP32} connectée à l'ordinateur via USB.
+\end{enumerate} \hfill \break
+
+Une fois tous les composants lancés, l'interface web est accessible depuis un navigateur sur le même réseau local, à l'adresse \texttt{http://<IP\_DU\_SERVEUR>:8000} (ou 5000 en mode debug). Les \texttt{ESP32} devraient se connecter au broker \texttt{MQTT}, apparaître sur la page "/capteurs" et commencer à envoyer des données visibles également sur la page "/historique". Si la découverte réseau (mDNS/Avahi/Bonjour) est fonctionnelle, il est souvent possible d'utiliser le nom d'hôte local de votre Raspberry Pi comme par exemple \texttt{http://raspberrypi.local:8000} (nous avons découvert cette astuce très utile pendant le testing de notre projet).
 
 \end{document}
-
