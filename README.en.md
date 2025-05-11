@@ -1,7 +1,7 @@
 # Project IOT
 
-[![en](https://img.shields.io/badge/lang-en-red.svg)](README.en.md)
-[![fr](https://img.shields.io/badge/lang-fr-yellow.svg)](README.md)
+[![en](https://img.shields.io/badge/lang-en-red.svg)](./README.en.md)
+[![fr](https://img.shields.io/badge/lang-fr-yellow.svg)](./README.md)
 
 Here is [a programming project](https://github.com/GreengagePlum/Project-IOT) in **Arduino C** and **Python** that aims to create and monitor an network of IOT sensors. The subject paper for the project is [available here](./IOC_mode_projet%20–%20SESI.pdf) for more details.
 
@@ -18,12 +18,14 @@ This project uses:
 
 _Under construction..._
 
+![The material that was used, a Raspberry Pi 3 and an ESP32 board](./images/material.jpg)
+
 ## Authors
 
 This programming project was carried out for the IOC (IOT) class of the Computer Science Master's first year, second semester (M1S2 2024/25) at Sorbonne Université by the following two fellow gentlemen.
 
 * Efe ERKEN 21400542
-* Sylvain PRANDO 2xxxxxxx
+* Sylvain PRANDO 21414666
 
 ## Language versions
 
@@ -48,9 +50,9 @@ Python 3.11.3
 
 ### How to build and execute?
 
-* For instructions concerning the "server" components, see [the server README](/server/README.md#usage).
-* For instructions concerning the ESP32s, _Under construction..._
+* For instructions concerning the "server" components, see [the server README](./server/README.md#usage).
+* For instructions concerning the ESP32s, see [the ESP32 README](./esp32/README.md).
 
 ## License
 
-This project is under the ["MIT" license](LICENSE).
+This project is under the ["MIT" license](./LICENSE).

@@ -1,7 +1,7 @@
 # Projet IOC
 
-[![en](https://img.shields.io/badge/lang-en-red.svg)](README.en.md)
-[![fr](https://img.shields.io/badge/lang-fr-yellow.svg)](README.md)
+[![en](https://img.shields.io/badge/lang-en-red.svg)](./README.en.md)
+[![fr](https://img.shields.io/badge/lang-fr-yellow.svg)](./README.md)
 
 Voici [un projet de programmation](https://github.com/GreengagePlum/Project-IOT) en **C Arduino** et **Python** qui vise à créer et surveiller un réseau de capteurs IOT. Le sujet du projet est [disponible ici](./IOC_mode_projet%20–%20SESI.pdf) pour plus de détails.
 
@@ -17,6 +17,8 @@ Ce projet utilise :
 ## Un aperçu
 
 _En construction..._
+
+![Le matériel qui a été utilisé, une Raspberry Pi 3 et une carte ESP32](./images/material.jpg)
 
 ## Auteurs
 
@@ -49,9 +51,9 @@ Python 3.11.3
 
 ### Comment construire et exécuter ?
 
-* Pour les instructions concernant les composants "serveur", regardez [le README serveur](/server/README.md#usage).
-* Pour les instructions concernant les ESP32, _En construction..._
+* Pour les instructions concernant les composants "serveur", regarder [le README serveur](./server/README.md#usage).
+* Pour les instructions concernant les ESP32, regarder [le README ESP32](./esp32/README.md).
 
 ## Licence
 
-Ce projet est sous la licence ["MIT"](LICENSE).
+Ce projet est sous la licence ["MIT"](./LICENSE).
