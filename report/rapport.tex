@@ -240,7 +240,7 @@ Enfin, le \textbf{code embarqué sur \texttt{ESP32}} est fonctionnel, permettant
 \begin{itemize}
 \item Lors de sa connexion, l'ESP32 boucle tant qu'il n'a pas reçu de message du serveur contenant son ID, il continue d'envoyer son adresse MAC de façon régulière.
 \item Il envoie un message de LWT (Last Will Testament) au broker contenant un message informant les autres membres du réseau de sa déconnexion.
-\item Après sa connexion, il garantit de respecter le keepalive, en envoyant le statut de la photorésistance toute les 5 secondes.
+\item Après sa connexion, il garantit de respecter le keepalive MQTT en plus d'envoyer le statut de la photorésistance toute les 2 secondes.
 \item Chaque demande d'actionnement (Allumage de LED), renvoie obligatoirement en retour le statut de l'élément, afin de contrôler la bonne exécution de l'instruction
 \item Enfin, pour éviter les rebonds et les faux positifs, le statut du bouton poussoir est contrôlé toute les 100 ms.
 \end{itemize}

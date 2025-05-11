@@ -201,12 +201,12 @@ void MQTT_send(Adafruit_MQTT_Publish * feed, const char * mess){
 
 }
 
-void alarm(){
-  tone(17, 440);
-  delay(500);
-  noTone(17);
+// void alarm(){
+//   tone(17, 440);
+//   delay(500);
+//   noTone(17);
 
-}
+// }
 
 #define TOKEN ";"
 
@@ -439,7 +439,7 @@ void mqtt_loop(struct Timer * clk) {
 /******************* Fonctions Loop **********************/
 
 struct Timer bp = {0,100000};
-struct Timer mqtt_cli = {1,5000000};
+struct Timer mqtt_cli = {1,2000000};
 
 void setup() {
   mqtt_setup();
